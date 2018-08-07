@@ -1,57 +1,56 @@
 ---
-eip: 1
-title: EIP Purpose and Guidelines
+EEP: 1
+title: EEP Purpose and Guidelines
 status: Active
 type: Meta
-author: Martin Becze <mb@ethereum.org>, Hudson Jameson <hudson@ethereum.org>, and others
-        https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1.md
-created: 2015-10-27, 2017-02-01
+author: NEED TO NAME AUTHORS
+created: 2018-xx-yy
 ---
 
-## What is an EIP?
+## What is an EEP?
 
-EIP stands for Ethereum Improvement Proposal. An EIP is a design document providing information to the Ethereum community, or describing a new feature for Ethereum or its processes or environment. The EIP should provide a concise technical specification of the feature and a rationale for the feature. The EIP author is responsible for building consensus within the community and documenting dissenting opinions.
+EEP stands for EOS Enhancement Proposal. An EEP is a design document providing information to the EOS community, or describing a new feature for EOS or its processes or environment. The EEP should provide a concise technical specification of the feature and a rationale for the feature. The EEP author is responsible for building consensus within the community and documenting dissenting opinions.
 
-## EIP Rationale
+## EEP Rationale
 
-We intend EIPs to be the primary mechanisms for proposing new features, for collecting community input on an issue, and for documenting the design decisions that have gone into Ethereum. Because the EIPs are maintained as text files in a versioned repository, their revision history is the historical record of the feature proposal.
+We intend EEPs to be the primary mechanisms for proposing new features, for collecting community input on an issue, and for documenting the design decisions that have gone into EOS. Because the EEPs are maintained as text files in a versioned repository, their revision history is the historical record of the feature proposal.
 
-For Ethereum implementers, EIPs are a convenient way to track the progress of their implementation. Ideally each implementation maintainer would list the EIPs that they have implemented. This will give end users a convenient way to know the current status of a given implementation or library.
+For EOS implementers, EEPs are a convenient way to track the progress of their implementation. Ideally each implementation maintainer would list the EEPs that they have implemented. This will give end users a convenient way to know the current status of a given implementation or library.
 
-## EIP Types
+## EEP Types
 
-There are three types of EIP:
+There are three types of EEP:
 
-- A **Standard Track EIP** describes any change that affects most or all Ethereum implementations, such as a change to the the network protocol, a change in block or transaction validity rules, proposed application standards/conventions, or any change or addition that affects the interoperability of applications using Ethereum. Furthermore Standard EIPs can be broken down into the following categories. Standards Track EIPs consist of three parts, a design document, implementation, and finally if warranted an update to the [formal specification].
-  - **Core** - improvements requiring a consensus fork (e.g. [EIP5], [EIP101]), as well as changes that are not necessarily consensus critical but may be relevant to [“core dev” discussions](https://github.com/ethereum/pm) (for example, [EIP90], and the miner/node strategy changes 2, 3, and 4 of [EIP86]).
-  - **Networking** - includes improvements around [devp2p] ([EIP8]) and [Light Ethereum Subprotocol], as well as proposed improvements to network protocol specifications of [whisper] and [swarm].
-  - **Interface** - includes improvements around client [API/RPC] specifications and standards, and also certain language-level standards like method names ([EIP59], [EIP6]) and [contract ABIs]. The label “interface” aligns with the [interfaces repo] and discussion should primarily occur in that repository before an EIP is submitted to the EIPs repository.
-  - **ERC** - application-level standards and conventions, including contract standards such as token standards ([ERC20]), name registries ([ERC26], [ERC137]), URI schemes ([ERC67]), library/package formats ([EIP82]), and wallet formats ([EIP75], [EIP85]).
-- An **Informational EIP** describes an Ethereum design issue, or provides general guidelines or information to the Ethereum community, but does not propose a new feature. Informational EIPs do not necessarily represent Ethereum community consensus or a recommendation, so users and implementers are free to ignore Informational EIPs or follow their advice.
-- A **Meta EIP** describes a process surrounding Ethereum or proposes a change to (or an event in) a process. Process EIPs are like Standards Track EIPs but apply to areas other than the Ethereum protocol itself. They may propose an implementation, but not to Ethereum's codebase; they often require community consensus; unlike Informational EIPs, they are more than recommendations, and users are typically not free to ignore them. Examples include procedures, guidelines, changes to the decision-making process, and changes to the tools or environment used in Ethereum development. Any meta-EIP is also considered a Process EIP.
+- A **Standard Track EEP** describes any change that affects most or all EOS implementations, such as a change to the the network protocol, a change in block or transaction validity rules, proposed application standards/conventions, or any change or addition that affects the interoperability of applications using EOS. Furthermore Standard EEPs can be broken down into the following categories. Standards Track EEPs consist of three parts, a design document, implementation, and finally if warranted an update to the [formal specification].
+  - **Core** - improvements requiring a consensus fork, as well as changes that are not necessarily consensus critical but may be relevant to [“core dev” discussions]
+  - **Networking** - includes improvements around [devp2p] and [Light Ethereum Subprotocol], as well as proposed improvements to network protocol specifications of [whisper] and [swarm].
+  - **Interface** - includes improvements around client [API/RPC] specifications and standards, and also certain language-level standards like method names and [contract ABIs]. The label “interface” aligns with the [interfaces repo] and discussion should primarily occur in that repository before an EEP is submitted to the EEPs repository.
+  - **ERC** - application-level standards and conventions, including contract standards such as token standards, name registries, URI schemes, library/package formats, and wallet formats.
+- An **Informational EEP** describes an EOS design issue, or provides general guidelines or information to the EOS community, but does not propose a new feature. Informational EEPs do not necessarily represent EOS community consensus or a recommendation, so users and implementers are free to ignore Informational EEPs or follow their advice.
+- A **Meta EEP** describes a process surrounding EOS or proposes a change to (or an event in) a process. Process EEPs are like Standard Track EEPs but apply to areas other than the EOS protocol itself. They may propose an implementation, but not to EOS's codebase; they often require community consensus; unlike Informational EEPs, they are more than recommendations, and users are typically not free to ignore them. Examples include procedures, guidelines, changes to the decision-making process, and changes to the tools or environment used in EOS development. Any meta-EEP is also considered a Process EEP.
 
-It is highly recommended that a single EIP contain a single key proposal or new idea. The more focused the EIP, the more successful it tends to be. A change to one client doesn't require an EIP; a change that affects multiple clients, or defines a standard for multiple apps to use, does.
+It is highly recommended that a single EEP contain a single key proposal or new idea. The more focused the EEP, the more successful it tends to be. A change to one client doesn't require an EEP; a change that affects multiple clients, or defines a standard for multiple apps to use, does.
 
-An EIP must meet certain minimum criteria. It must be a clear and complete description of the proposed enhancement. The enhancement must represent a net improvement. The proposed implementation, if applicable, must be solid and must not complicate the protocol unduly.
+An EEP must meet certain minimum criteria. It must be a clear and complete description of the proposed enhancement. The enhancement must represent a net improvement. The proposed implementation, if applicable, must be solid and must not complicate the protocol unduly.
 
-## EIP Work Flow
+## EEP Work Flow
 
-Parties involved in the process are you, the champion or *EIP author*, the [*EIP editors*](#eip-editors), and the [*Ethereum Core Developers*](https://github.com/ethereum/pm).
+Parties involved in the process are you, the champion or *EEP author*, the [*EEP editors*](#eep-editors), and the [*EOS Core Developers*].
 
-:warning: Before you begin, vet your idea, this will save you time. Ask the Ethereum community first if an idea is original to avoid wasting time on something that will be be rejected based on prior research (searching the Internet does not always do the trick). It also helps to make sure the idea is applicable to the entire community and not just the author. Just because an idea sounds good to the author does not mean it will work for most people in most areas where Ethereum is used. Examples of appropriate public forums to gauge interest around your EIP include [the Ethereum subreddit], [the Issues section of this repository], and [one of the Ethereum Gitter chat rooms]. In particular, [the Issues section of this repository] is an excellent place to discuss your proposal with the community and start creating more formalized language around your EIP.
+:warning: Before you begin, vet your idea, this will save you time. Ask the EOS community first if an idea is original to avoid wasting time on something that will be be rejected based on prior research (searching the Internet does not always do the trick). It also helps to make sure the idea is applicable to the entire community and not just the author. Just because an idea sounds good to the author does not mean it will work for most people in most areas where EOS is used. Examples of appropriate public forums to gauge interest around your EEP include [the EOS subreddit], [the Issues section of this repository], and [SHOULD WE LIST A SITE LIKE EOS GO FORUMS?]. In particular, [the Issues section of this repository] is an excellent place to discuss your proposal with the community and start creating more formalized language around your EEP.
 
-Your role as the champion is to write the EIP using the style and format described below, shepherd the discussions in the appropriate forums, and build community consensus around the idea. Following is the process that a successful EIP will move along:
+Your role as the champion is to write the EEP using the style and format described below, shepherd the discussions in the appropriate forums, and build community consensus around the idea. Following is the process that a successful EEP will move along:
 
 ```
 [ WIP ] -> [ DRAFT ] -> [ LAST CALL ] -> [ ACCEPTED ] -> [ FINAL ]
 ```
 
-Each status change is requested by the EIP author and reviewed by the EIP editors. Use a pull request to update the status. Please include a link to where people should continue discussing your EIP. The EIP editors will process these requests as per the conditions below.
+Each status change is requested by the EEP author and reviewed by the EEP editors. Use a pull request to update the status. Please include a link to where people should continue discussing your EEP. The EEP editors will process these requests as per the conditions below.
 
-* **Work in progress (WIP)** -- Once the champion has asked the Ethereum community whether an idea has any chance of support, they will write a draft EIP as a [pull request]. Consider including an implementation if this will aid people in studying the EIP.
-  * :arrow_right: Draft -- If agreeable, EIP editor will assign the EIP a number (generally the issue or PR number related to the EIP) and merge your pull request. The EIP editor will not unreasonably deny an EIP.
-  * :x: Draft -- Reasons for denying draft status include being too unfocused, too broad, duplication of effort, being technically unsound, not providing proper motivation or addressing backwards compatibility, or not in keeping with the [Ethereum philosophy](https://github.com/ethereum/wiki/wiki/White-Paper#philosophy).
-* **Draft** -- Once the first draft has been merged, you may submit follow-up pull requests with further changes to your draft until such point as you believe the EIP to be mature and ready to proceed to the next status. An EIP in draft status must be implemented to be considered for promotion to the next status (ignore this requirement for core EIPs).
+* **Work in progress (WIP)** -- Once the champion has asked the EOS community whether an idea has any chance of support, they will write a draft EEP as a [pull request]. Consider including an implementation if this will aid people in studying the EEP.
+  * :arrow_right: Draft -- If agreeable, EEP editor will assign the EEP a number (generally the issue or PR number related to the EEP) and merge your pull request. The EEP editor will not unreasonably deny an EEP.
+  * :x: Draft -- Reasons for denying draft status include being too unfocused, too broad, duplication of effort, being technically unsound, not providing proper motivation or addressing backwards compatibility, or not in keeping with the [EOS philosophy].
+* **Draft** -- Once the first draft has been merged, you may submit follow-up pull requests with further changes to your draft until such point as you believe the EEP to be mature and ready to proceed to the next status. An EEP in draft status must be implemented to be considered for promotion to the next status (ignore this requirement for core EEPs).
   * :arrow_right: Last Call -- If agreeable, the EIP editor will assign Last Call status and set a review end date, normally 14 days later.
   * :x: Last Call -- A request for Last Call status will be denied if material changes are still expected to be made to the draft. We hope that EIPs only enter Last Call once, so as to avoid unnecessary noise on the RSS feed. Last Call will be denied if the implementation is not complete and supported by the community.
 * **Last Call** -- This EIP will listed prominently on the http://eips.ethereum.org/ website (subscribe via RSS at [last-call.xml](/last-call.xml)).
