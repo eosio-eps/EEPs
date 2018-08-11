@@ -37,7 +37,7 @@ An EEP must meet certain minimum criteria. It must be a clear and complete descr
 
 Parties involved in the process are you, the champion or *EEP author*, the [*EEP editors*](#eep-editors), and the [*EOS Core Developers*]. [FLAG - WE WILL NEED TO MAKE A NEW HASHTAG TO REPLACE #eep-editors AND WE DON'T HAVE CORE DEVS]
 
-:warning: Before you begin, vet your idea, this will save you time. Ask the EOS community first if an idea is original to avoid wasting time on something that will be be rejected based on prior research (searching the Internet does not always do the trick). It also helps to make sure the idea is applicable to the entire community and not just the author. Just because an idea sounds good to the author does not mean it will work for most people in most areas where EOS is used. Examples of appropriate public forums to gauge interest around your EEP include [the EOS subreddit], [the Issues section of this repository], and [SHOULD WE LIST A SITE LIKE EOS GO FORUMS?]. In particular, [the Issues section of this repository] is an excellent place to discuss your proposal with the community and start creating more formalized language around your EEP.
+:warning: Before you begin, vet your idea, this will save you time. Ask the EOS community first if an idea is original to avoid wasting time on something that will be be rejected based on prior research (searching the Internet does not always do the trick). It also helps to make sure the idea is applicable to the entire community and not just the author. Just because an idea sounds good to the author does not mean it will work for most people in most areas where EOS is used. Examples of appropriate public forums to gauge interest around your EEP include [the EOS subreddit], [the Issues section of this repository], and [SHOULD WE LIST A SITE LIKE EOS GO FORUMS?]. In particular, [FLAG - WE WOULD NEED TO SEE IF WE HAVE AN ISSUES SECTION OF THE REPO/WHAT WE END UP CALLING IT] [the Issues section of this repository] is an excellent place to discuss your proposal with the community and start creating more formalized language around your EEP.
 
 Your role as the champion is to write the EEP using the style and format described below, shepherd the discussions in the appropriate forums, and build community consensus around the idea. Following is the process that a successful EEP will move along:
 
@@ -49,7 +49,7 @@ Each status change is requested by the EEP author and reviewed by the EEP editor
 
 * **Work in progress (WIP)** -- Once the champion has asked the EOS community whether an idea has any chance of support, they will write a draft EEP as a [pull request]. Consider including an implementation if this will aid people in studying the EEP.
   * :arrow_right: Draft -- If agreeable, EEP editor will assign the EEP a number (generally the issue or PR number related to the EEP) and merge your pull request. The EEP editor will not unreasonably deny an EEP.
-  * :x: Draft -- Reasons for denying draft status include being too unfocused, too broad, duplication of effort, being technically unsound, not providing proper motivation or addressing backwards compatibility, or not in keeping with the [EOS philosophy].
+  * :x: Draft -- Reasons for denying draft status include being too unfocused, too broad, duplication of effort, being technically unsound, not providing proper motivation or addressing backwards compatibility, or not in keeping with the [EOS philosophy]. [FLAG - WE DON'T HAVE AN EOS PHILOSOPHY TEXT LIKE ETH HAD SET UP]
 * **Draft** -- Once the first draft has been merged, you may submit follow-up pull requests with further changes to your draft until such point as you believe the EEP to be mature and ready to proceed to the next status. An EEP in draft status must be implemented to be considered for promotion to the next status (ignore this requirement for core EEPs).
   * :arrow_right: Last Call -- If agreeable, the EEP editor will assign Last Call status and set a review end date, normally 14 days later.
   * :x: Last Call -- A request for Last Call status will be denied if material changes are still expected to be made to the draft. We hope that EEPs only enter Last Call once, so as to avoid unnecessary noise on the RSS feed. Last Call will be denied if the implementation is not complete and supported by the community.
@@ -104,9 +104,9 @@ Each EEP must begin with an RFC 822 style header preamble, preceded and followed
 
 `* review-period-end: YYYY-MM-DD
 
-` type: `<Standards Track (Core, Networking, Interface, ERC)  | Informational | Meta>
+` type: `<Standards Track (Core, Networking, Interface, ERC) [FLAG - WE DON'T HAVE AN ERC THING SET UP YET]  | Informational | Meta>
 
-` * category:` <Core | Networking | Interface | ERC>
+` * category:` <Core | Networking | Interface | ERC> [FLAG - WE DON'T HAVE AN ERC THING SET UP YET]
 
 ` created:` <date created on, in ISO 8601 (yyyy-mm-dd) format>
 
@@ -136,9 +136,9 @@ if the email address is not given.
 
 Note: The resolution header is required for Standards Track EEPs only. It contains a URL that should point to an email message or other web resource where the pronouncement about the EEP is made.
 
-While an EEP is a draft, a discussions-to header will indicate the mailing list or URL where the EEP is being discussed. As mentioned above, examples for places to discuss your EEP include [FLAG AS THERE IS CURRENTLY NOT A GITTER SETUP?] [EOS topics on Gitter](https://gitter.im/eos/topics), an issue in this repo or in a fork of this repo, [FLAG, IS THERE AN EQUIVALENT TO SET UP?][Ethereum Magicians](https://ethereum-magicians.org/) (this is suitable for EEPs that may be contentious or have a strong governance aspect), and [Reddit r/eos](https://www.reddit.com/r/eos/). No discussions-to header is necessary if the EEP is being discussed privately with the author.
+While an EEP is a draft, a discussions-to header will indicate the mailing list or URL where the EEP is being discussed. As mentioned above, examples for places to discuss your EEP include [FLAG AS THERE IS CURRENTLY NOT A GITTER SETUP?] [EOS topics on Gitter](https://gitter.im/eos/topics), an issue in this repo or in a fork of this repo, [FLAG, IS THERE AN EQUIVALENT TO SET UP?][Ethereum Magicians](https://ethereum-magicians.org/) (this is suitable for EEPs that may be contentious or have a strong governance aspect), and [Reddit r/eos](https://www.reddit.com/r/eos/). No discussions-to header is necessary if the EEP is being discussed privately with the author. [FLAG - WE DON'T HAVE EQUIVALENTS OF GITTER/MAGICIAN SITE]
 
-The type header specifies the type of EEP: Standards Track, Meta, or Informational. If the track is Standards please include the subcategory (core, networking, interface, or ERC).
+The type header specifies the type of EEP: Standards Track, Meta, or Informational. If the track is Standards please include the subcategory (core, networking, interface, or ERC). [FLAG - WE DON'T HAVE AN ERC THING SET UP YET]
 
 The category header specifies the EEP's category. This is required for standards-track EEPs only.
 
