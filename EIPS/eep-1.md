@@ -22,9 +22,9 @@ For EOS implementers, EEPs are a convenient way to track the progress of their i
 There are three types of EEP:
 
 - A **Standard Track EEP** describes any change that affects most or all EOS implementations, such as a change to the the network protocol, a change in block or transaction validity rules, proposed application standards/conventions, or any change or addition that affects the interoperability of applications using EOS. Furthermore Standard EEPs can be broken down into the following categories. Standards Track EEPs consist of three parts, a design document, implementation, and finally if warranted an update to the [formal specification].
-  - **Core** - improvements requiring a consensus fork, as well as changes that are not necessarily consensus critical but may be relevant to [“core dev” discussions] [FLAG - DO WE ALSO HAVE CONSENSUS FORKS ON EOS?] [FLAG - WE DON'T HAVE CORE DEVS, SHOULD THAT BE REPLACED BY SOMETHING?]
-  - **Networking** - includes improvements around [devp2p] and [Light Ethereum Subprotocol], as well as proposed improvements to network protocol specifications of [whisper] and [swarm]. [FLAG - Do these make sense/do we have a similar thing? [devp2p] and [Light Ethereum Subprotocol] and  specifications of [whisper] and [swarm]]
-  - **Interface** - includes improvements around client [API/RPC] specifications and standards, and also certain language-level standards like method names and [contract ABIs]. The label “interface” aligns with the [FLAG - DO WE NEED TO CHANCE interfaces repo] [interfaces repo] and discussion should primarily occur in that repository before an EEP is submitted to the EEPs repository.
+  - **Core** - improvements requiring a consensus fork, as well as changes that are not necessarily consensus critical but may be relevant to [Block Producer and Block.one discussions] 
+  - **Networking** - improvements around [p2p] protocol.
+  - **Interface** - includes improvements around client [API] specifications and standards, and also certain language-level standards like [contract ABIs]. For [contract ABIS], it aligns with the [eosio.contracts repo](https://github.com/EOSIO/eosio.contracts) and discussion should primarily occur in that repository before an EEP is submitted to the EEPs repository
   
 - An **Informational EEP** describes an EOS design issue, or provides general guidelines or information to the EOS community, but does not propose a new feature. Informational EEPs do not necessarily represent EOS community consensus or a recommendation, so users and implementers are free to ignore Informational EEPs or follow their advice.
 - A **Meta EEP** describes a process surrounding EOS or proposes a change to (or an event in) a process. Process EEPs are like Standard Track EEPs but apply to areas other than the EOS protocol itself. They may propose an implementation, but not to EOS's codebase; they often require community consensus; unlike Informational EEPs, they are more than recommendations, and users are typically not free to ignore them. Examples include procedures, guidelines, changes to the decision-making process, and changes to the tools or environment used in EOS development. Any meta-EEP is also considered a Process EEP.
@@ -35,7 +35,7 @@ An EEP must meet certain minimum criteria. It must be a clear and complete descr
 
 ## EEP Work Flow
 
-Parties involved in the process are you, the champion or *EEP author*, the [*EEP editors*](#eep-editors), and the [*EOS Core Developers*]. [FLAG - WE WILL NEED TO MAKE A NEW HASHTAG TO REPLACE #eep-editors AND WE DON'T HAVE CORE DEVS]
+Parties involved in the process are you, the champion or *EEP author*, the [*EEP editors*](#eep-editors), and the [* recognized EOS Core Developers - Block Producers, Block.one, OCI...*].
 
 :warning: Before you begin, vet your idea, this will save you time. Ask the EOS community first if an idea is original to avoid wasting time on something that will be be rejected based on prior research (searching the Internet does not always do the trick). It also helps to make sure the idea is applicable to the entire community and not just the author. Just because an idea sounds good to the author does not mean it will work for most people in most areas where EOS is used. Examples of appropriate public forums to gauge interest around your EEP include [the EOS subreddit](https://reddit.com/r/eos), [the Issues section of this repository], and [the EEP Telegram Channel](https://t.me/eos_enhancements_proposals). In particular, [the Issues section of this repository] is an excellent place to discuss your proposal with the community and start creating more formalized language around your EEP.
 
@@ -53,12 +53,12 @@ Each status change is requested by the EEP author and reviewed by the EEP editor
 * **Draft** -- Once the first draft has been merged, you may submit follow-up pull requests with further changes to your draft until such point as you believe the EEP to be mature and ready to proceed to the next status. An EEP in draft status must be implemented to be considered for promotion to the next status (ignore this requirement for core EEPs).
   * :arrow_right: Last Call -- If agreeable, the EEP editor will assign Last Call status and set a review end date, normally 14 days later.
   * :x: Last Call -- A request for Last Call status will be denied if material changes are still expected to be made to the draft. We hope that EEPs only enter Last Call once, so as to avoid unnecessary noise on the RSS feed. Last Call will be denied if the implementation is not complete and supported by the community.
-* **Last Call** -- This EEP will listed prominently on the [NEED WEBSITE CREATED] website [NEED TO CREATE AN RSS] (subscribe via RSS at [last-call.xml](/last-call.xml)).
+* **Last Call** -- This EEP will listed prominently on the [NEED WEBSITE CREATED] website.
   * :x: -- A Last Call which results in material changes or substantial unaddressed complaints will cause the EEP to revert to Draft.
-  * :arrow_right: Accepted (Core EEPs only) -- After the review end date, the [IF WE HAVE SOMETHING SIMILAR TO CORE DEVS] EOS Core Developers will vote on whether to accept this change. If yes, the status will upgrade to Accepted.
+  * :arrow_right: Accepted (Core EEPs only) -- After the review end date, the EOS Core Developers will vote on whether to accept this change. If yes, the status will upgrade to Accepted.
   * :arrow_right: Final (Not core EEPs) -- A successful Last Call without material changes or unaddressed complaints will become Final.
-* **Accepted (Core EEPs only)** -- This is being implemented by [FLAGGING FOR CORE DEV] EOS Core Developers.
-  * :arrow_right: Final -- Standards Track Core EEPs must be implemented in at least three viable EOS clients [WILL WE NEED A DIFFERENT AMOUNT?] before it can be considered Final. When the implementation is complete and supported by the community, the status will be changed to “Final”.
+* **Accepted (Core EEPs only)** -- This is being implemented by EOS Core Developers.
+  * :arrow_right: Final -- Standards Track Core EEPs must be implemented in at least three viable EOS clients [FLAG - NEED TO DISCUSS THIS ONE] before it can be considered Final. When the implementation is complete and supported by the community, the status will be changed to “Final”.
 * **Final** -- This EEP represents the current state-of-the-art. A Final EEP should only be updated to correct errata.
 
 Other exceptional statuses include:
@@ -72,11 +72,11 @@ Other exceptional statuses include:
 
 Each EEP should have the following parts:
 
-- Preamble - RFC 822 style headers containing metadata about the EEP, including the EEP number, a short descriptive title (limited to a maximum of 44 characters), and the author details. See [LEAVING THIS IN AS WE'LL NEED TO CREATE OUR OWN VERSION AND THEN EDIT THIS LINK] [below](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1.md#eip-header-preamble) for details.
+- Preamble - RFC 822 style headers containing metadata about the EEP, including the EEP number, a short descriptive title (limited to a maximum of 44 characters), and the author details. See [below](https://github.com/eoscanada/EEPs/blob/master/EEPS/eep-1.md#eip-header-preamble) for details.
 - Simple Summary - “If you can’t explain it simply, you don’t understand it well enough.” Provide a simplified and layman-accessible explanation of the EEP.
 - Abstract - a short (~200 word) description of the technical issue being addressed.
 - Motivation (*optional) - The motivation is critical for EEPs that want to change the EOS.IO protocol. It should clearly explain why the existing protocol specification is inadequate to address the problem that the EEP solves. EEP submissions without sufficient motivation may be rejected outright.
-- Specification - The technical specification should describe the syntax and semantics of any new feature. The specification should be detailed enough to allow competing, interoperable implementations for any of the current EOS platforms [FLAG FOR EDIT >] (cpp-ethereum, go-ethereum, parity, ethereumJ, ethereumjs-lib, [and others](https://github.com/ethereum/wiki/wiki/Clients).
+- Specification - The technical specification should describe the syntax and semantics of any new feature. The specification should be detailed enough to allow competing, interoperable implementations for any of the current EOS platforms (eos-go, eosjs)
 - Rationale - The rationale fleshes out the specification by describing what motivated the design and why particular design decisions were made. It should describe alternate designs that were considered and related work, e.g. how the feature is supported in other languages. The rationale may also provide evidence of consensus within the community, and should discuss important objections or concerns raised during discussion.
 - Backwards Compatibility - All EEPs that introduce backwards incompatibilities must include a section describing these incompatibilities and their severity. The EEP must explain how the author proposes to deal with these incompatibilities. EEP submissions without a sufficient backwards compatibility treatise may be rejected outright.
 - Test Cases - Test cases for an implementation are mandatory for EEPs that are affecting consensus changes. Other EEPs can choose to include links to test cases if applicable.
@@ -104,9 +104,9 @@ Each EEP must begin with an RFC 822 style header preamble, preceded and followed
 
 `* review-period-end: YYYY-MM-DD
 
-` type: `<Standards Track (Core, Networking, Interface, ERC) [FLAG - WE DON'T HAVE AN ERC THING SET UP YET]  | Informational | Meta>
+` type: `<Standards Track (Core, Networking, Interface) | Informational | Meta>
 
-` * category:` <Core | Networking | Interface | ERC> [FLAG - WE DON'T HAVE AN ERC THING SET UP YET]
+` * category:` <Core | Networking | Interface > 
 
 ` created:` <date created on, in ISO 8601 (yyyy-mm-dd) format>
 
@@ -136,7 +136,7 @@ if the email address is not given.
 
 Note: The resolution header is required for Standards Track EEPs only. It contains a URL that should point to an email message or other web resource where the pronouncement about the EEP is made.
 
-While an EEP is a draft, a discussions-to header will indicate the mailing list or URL where the EEP is being discussed. As mentioned above, examples for places to discuss your EEP include [FLAG AS THERE IS CURRENTLY NOT A GITTER SETUP?] [EOS topics on Gitter](https://gitter.im/eos/topics), an issue in this repo or in a fork of this repo, [FLAG, IS THERE AN EQUIVALENT TO SET UP?][Ethereum Magicians](https://ethereum-magicians.org/) (this is suitable for EEPs that may be contentious or have a strong governance aspect), and [Reddit r/eos](https://www.reddit.com/r/eos/). No discussions-to header is necessary if the EEP is being discussed privately with the author. [FLAG - WE DON'T HAVE EQUIVALENTS OF GITTER/MAGICIAN SITE]
+While an EEP is a draft, a discussions-to header will indicate the mailing list or URL where the EEP is being discussed. As mentioned above, examples for places to discuss your EEP include [EEPs Channel on Telegram](https://t.me/eos_enhancements_proposals), an issue in this repo or in a fork of this repo, the [EOS Mainnet BPs Telegram Channel](https://t.me/joinchat/HbgyfEqlPd_HCo4R8EJsnw) and [Reddit r/eos](https://www.reddit.com/r/eos/). No discussions-to header is necessary if the EEP is being discussed privately with the author.
 
 The type header specifies the type of EEP: Standards Track, Meta, or Informational. If the track is Standards please include the subcategory (core, networking, interface, or ERC). [FLAG - WE DON'T HAVE AN ERC THING SET UP YET]
 
@@ -202,17 +202,13 @@ The editors don't pass judgment on EEPs. We merely do the administrative & edito
 
 This document was derived heavily from [Ethereum's EIP-1] written by Martin Becze, Hudson Jameson, and others, which was derived from [Bitcoin's BIP-0001] written by Amir Taaki which in turn was derived from [Python's PEP-0001]. In many places text was simply copied and modified. Although the PEP-0001 text was written by Barry Warsaw, Jeremy Hylton, and David Goodger, they are not responsible for its use in the EOS Enhancement Process, and should not be bothered with technical questions specific to EOS or the EEP. Please direct all comments to the EEP editors.
 
+## Bibliography
 
-
-
-
-
-
-
-
-
-
-
+[eosio.contracts](https://github.com/EOSIO/eosio.contracts)
+[the EOS subreddit](https://www.reddit.com/r/eos/)
+[EEP Telegram Channel](https://t.me/eos_enhancements_proposals)
+[pull request]: https://github.com/eoscanada/EEPs/pulls
+[the Issues section of this repository]: https://github.com/eoscanada/EEPs/issues
 [markdown]: https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
 [Ethereum's EIP-1]: https://github.com/ethereum/EIPs/
 [Bitcoin's BIP-0001]: https://github.com/bitcoin/bips
