@@ -1,7 +1,7 @@
 ---
 eip: 2
 title: EOS Verificatoin of Web Properties
-author: Josh Kauffman <josh@eoscanada.com>
+author: Josh Kauffman <josh@eoscanada.com>, Alexandre Bourget <alex@eoscanada.com>, Marc-Antoine Ross <marc@eoscanada.com>, Stephane Duschesneau <stephane@eoscanada.com>, Matthieu Vachon <matthieu.vachon@eoscanada.com>
 status: Draft
 type: Informational EEP
 category: N/A
@@ -53,15 +53,15 @@ that the system uses.
 
 ### Breakdown
 
-*name* - Max 100 characters. This field is to assign a name to the account that can be displayed by UIs (first name/last name, business name, pseudonym, etc...)
+**Name** - Max 100 characters. This field is to assign a name to the account that can be displayed by UIs (first name/last name, business name, pseudonym, etc...)
 
-*Website* - The URL that an account wants to be associated to. It will need to host a .csv file named `claims.csv` in the path /.well-known/eosio-accounts/
+**Website** - The URL that an account wants to be associated to. It will need to host a .csv file named `claims.csv` in the path /.well-known/eosio-accounts/
 
-*GitHub* - The URL of the gist with the filename `eosio-accounts-claims.csv`.
+**GitHub** - The URL of the gist with the filename `eosio-accounts-claims.csv`.
 
 Each line of the .csv file should contain:
 
-First 8 bytes of the chain ID, followed by a comma, followed by an EOSIO account name
+*First 8 bytes of the chain ID, followed by a comma, followed by an EOSIO account name*
 
 Example of account `testtesttest` on the EOS mainnet:
 
