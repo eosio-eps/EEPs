@@ -35,41 +35,37 @@ that the system uses.
 
 ### Proposed JSON:
 ```
-owner {account_name}
-json:
 {
-“website”: “https://example.com/about_eos”
-“twitter”: “https://twitter.com/{twitter_handle}/status/{tweet_ID}”
-“telegram”: {telegram_handle}
-“facebook”: “https://www.facebook.com/{account_name}/about?lst={ID}&section=bio”
-“reddit”: “https://www.reddit.com/r/EOSAccountProofs/comments/{ID}/{owner}/”
-“github”: https://gist.github.com/{github_handle}/{ID}
-“source_contractname”: 
-“nextsource_contractname”: 
-“updateproposal_contractname”: 
+  "name": "Long form name",
+  "website": "https://example.com",
+  "accounts": {
+    "github": {
+      "handle": "github_account_name",
+      "claim": "https://gist.github.com/{ID}"
+    },
+  },
+  "contract": {
+    "repo": "https://github.com/org/repo",
+    "rev": "abcdef123123123123abcdef"
+  }
 }
 ```
 
 ### Breakdown
 
-*Owner* - The account name that is looking to be verified
+*name* - Max 100 characters. This field is to assign a name to the account that can be displayed by UIs (first name/last name, business name, pseudonym, etc...)
 
-*Website* - The URL that an account wants to be associated to. It will need to have a file within the top-level called
-{account_name}.txt that contains nothing other than the account name within.
+*Website* - The URL that an account wants to be associated to. It will need to host a .csv file named `claims.csv` in the path /.well-known/eosio-accounts/
 
-*Twitter* - The URL of the tweet where a user posts "I am the owner of the EOS account {account_name}."
+*GitHub* - The URL of the gist with the filename `eosio-accounts-claims.csv`.
 
-*Telegram* - The Telegram handle that an account wants to be associated to. Within the bio of the account, a user will
-have to enter #eosproof {account_name}.
+Each line of the .csv file should contain:
 
-*Facebook* - The URL of the 'About/Details About You' section, where the user will have to enter #eosproof {account_name}.
+First 8 bytes of the chain ID, followed by a comma, followed by an EOSIO account name
 
-*Reddit* - The URL of the post titled {account_name} that a user creates within the subreddit /r/EOSAccountProofs in which they enter
-I am the owner of the EOS account {account_name}.
+Example of account `testtesttest` on the EOS mainnet:
 
-*GitHub* - The URL of the gist with the filename eosproof.md containing the text I am the owner of the EOS account 
-{account_name}.
-
+aca376f2,testtesttest
 
 ### Implementation
 
