@@ -8,15 +8,21 @@ category: N/A
 created: 2018-10-10
 ---
 
-## Rationale
+## Summary
 
 There is currently no trusted mechanism by which an EOS account owner can have their account verified. By adopting a structure 
 similar to [Keybase's](https://keybase.io) verification system, an EOS user will be able to link their account to multiple 
 web properties that they are in control of. This can be used to increase trust of an account, so that another user will 
-be more or less inclined to enter into a transaction with them. 
+be more or less likely to enter into a transaction with them. 
 
 The goal is to introduce increased trust into the ecosystem. We envision that Block Explorers will be able to scrape
 data from this mechanism to display verified properties. 
+
+## Motivation
+
+The original motivation came from seeing ECAF send out messages to user accounts whom they were trying to reach.
+Without an easy and verifiable means for another account to verify that this is the *the* ECAF EOS account, there 
+is no reason to expect trust to be assumed. 
 
 ## Specification
 
@@ -27,7 +33,7 @@ the EOS account `accountsjson` which exists on the EOS mainnet
 3. A user can update the information by sending a new transaction. The most recent transaction will be the only one
 that the system uses.
 
-## Proposed JSON:
+### Proposed JSON:
 ```
 owner {account_name}
 json:
@@ -44,7 +50,7 @@ json:
 }
 ```
 
-## Breakdown
+### Breakdown
 
 *Owner* - The account name that is looking to be verified
 
@@ -66,5 +72,9 @@ I am the owner of the EOS account {account_name}.
 
 
 ### Implementation
+
+## Copyright
+
+Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
 
