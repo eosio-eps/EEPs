@@ -1,4 +1,4 @@
-When opening a pull request to submit a new EEP, please use the suggested template: https://github.com/ethereum/EEPs/blob/master/eep-X.md
+When opening a pull request to submit a new EEP, please use the suggested template: https://github.com/eoscanada/EEPs/blob/master/eep-X.md
 
 We have a GitHub bot that automatically merges some PRs. It will merge yours immediately if certain criteria are met:
 
