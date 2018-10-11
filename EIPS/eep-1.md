@@ -72,7 +72,7 @@ Other exceptional statuses include:
 
 Each EEP should have the following parts:
 
-- Preamble - RFC 822 style headers containing metadata about the EEP, including the EEP number, a short descriptive title (limited to a maximum of 44 characters), and the author details. See [below](https://github.com/eoscanada/EEPs/blob/master/EEPS/eep-1.md#eip-header-preamble) for details.
+- Preamble - RFC 822 style headers containing metadata about the EEP, including the EEP number, a short descriptive title (limited to a maximum of 44 characters), and the author details. See [below](https://github.com/eoscanada/EEPs/blob/master/EEPS/eep-1.md#eep-header-preamble) for details.
 - Simple Summary - “If you can’t explain it simply, you don’t understand it well enough.” Provide a simplified and layman-accessible explanation of the EEP.
 - Abstract - a short (~200 word) description of the technical issue being addressed.
 - Motivation (*optional) - The motivation is critical for EEPs that want to change the EOS.IO protocol. It should clearly explain why the existing protocol specification is inadequate to address the problem that the EEP solves. EEP submissions without sufficient motivation may be rejected outright.
