@@ -64,10 +64,7 @@ Each line of the .csv file should contain:
 *First 8 bytes of the chain ID, followed by a comma, followed by an EOSIO account name*
 
 Example of account `testtesttest` on the EOS mainnet:
-
 aca376f2,testtesttest
-
-### Implementation
 
 ## Copyright
 
