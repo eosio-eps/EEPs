@@ -3,7 +3,7 @@ EEP: 2
 title: EOS Verification of Web Properties
 author: Josh Kauffman <josh@eoscanada.com>, Alexandre Bourget <alex@eoscanada.com>, Marc-Antoine Ross <marc@eoscanada.com>, Stephane Duschesneau <stephane@eoscanada.com>, Matthieu Vachon <matthieu.vachon@eoscanada.com>
 status: Draft
-type: Informational
+type: RFC
 category: N/A
 created: 2018-10-10
 ---
