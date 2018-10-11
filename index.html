@@ -3,44 +3,44 @@ layout: default
 title: Home
 ---
 
-<h1 class="page-heading">EIPs
-  <a href="https://gitter.im/EOS-Mainnet/EOSIPs?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge"><img src="https://badges.gitter.im/Join%20Chat.svg" alt="Gitter"></a>
-  <a href="/last-call.xml"><img src="https://img.shields.io/badge/rss-Last Calls-red.svg" alt="RSS"></a>
+<h1 class="page-heading">EEPs
+  
+  
 </h1>
-<p>EOS Improvement Proposals (EOSIPs) describe standards for the EOS.IO-based EOS mainnet, including core protocol specifications, client APIs, and contract standards.</p>
+<p>EOS Improvement Proposals (EEPs) describe standards for the EOSIO-based EOS mainnet, including core protocol specifications, client APIs, and contract standards.</p>
 
 <h2>Contributing</h2>
-<p>First review <a href="EOSIPs/eosip-1">EOSIP-1</a>. Then clone the repository and add your EOSIP to it. There is a <a href="https://github.com/ethereum/EOSIPs/blob/master/eip-X.md">template EOSIP here</a>. Then submit a Pull Request to Ethereum's <a href="https://github.com/ethereum/EOSIPs">EOSIPs repository</a>.</p>
+<p>First review <a href="EEPs/eep-1">EEP-1</a>. Then clone the repository and add your EEP to it. There is a <a href="https://github.com/eoscanada/EEPs/blob/master/eep-X.md">template EEP here</a>. Then submit a Pull Request to EOS Canada's <a href="https://github.com/eoscanada/EEPs">EEPs repository</a>.</p>
 
-<h2>EOSIP status terms</h2>
+<h2>EEP status terms</h2>
 <ul>
-  <li><strong>Draft</strong> - an EOSIP that is open for consideration.</li>
-  <li><strong>Accepted</strong> - an EOSIP that is planned for immediate adoption.</li>
-  <li><strong>Final</strong> - an EOSIP that has been adopted previously.</li>
-  <li><strong>Deferred</strong> an EOSIP that is not being considered for immediate adoption. May be reconsidered in the future.</li>
+  <li><strong>Draft</strong> - an EEP that is open for consideration.</li>
+  <li><strong>Accepted</strong> - an EEP that is planned for immediate adoption.</li>
+  <li><strong>Final</strong> - an EEP that has been adopted previously.</li>
+  <li><strong>Deferred</strong> an EEP that is not being considered for immediate adoption. May be reconsidered in the future.</li>
 </ul>
 
-<h2>EOSIP Types</h2>
+<h2>EEP Types</h2>
 
-<p>EOSIPs are separated into a number of types, and each has its own list of EOSIPs.</p>
+<p>EEPs are separated into a number of types, and each has its own list of EEPs.</p>
 
 <h3>Standard Track ({{site.pages|where:"type","Standards Track"|size}})</h3>
-<p>Describes any change that affects most or all Ethereum implementations, such as a change to the the network protocol, a change in block or transaction validity rules, proposed application standards/conventions, or any change or addition that affects the interoperability of applications using Ethereum. Furthermore Standard EOSIPs can be broken down into the following categories.</p>
+<p>Describes any change that affects most or all EOS implementations, such as a change to the the network protocol, a change in block or transaction validity rules, proposed application standards/conventions, or any change or addition that affects the interoperability of applications using EOSIO. Furthermore Standard EEPs can be broken down into the following categories.</p>
 
 <h4><a href="{{"core"|relative_url}}">Core</a> ({{site.pages|where:"type","Standards Track"|where:"category","Core"|size}})</h4>
-<p>Improvements requiring a consensus fork (e.g. <a href="EIPS/eip-5">EIP5</a>, <a href="EIPS/eip-101">EIP101</a>), as well as changes that are not necessarily consensus critical but may be relevant to “core dev” discussions (for example, the miner/node strategy changes 2, 3, and 4 of <a href="EIPS/eip-86">EIP86</a>).</p>
+<p>Improvements requiring a consensus fork, as well as changes that are not necessarily consensus critical but may be relevant to “core dev” discussions.</p>
 
 <h4><a href="{{"networking"|relative_url}}">Networking</a> ({{site.pages|where:"type","Standards Track"|where:"category","Networking"|size}})</h4>
-<p>Includes improvements around devp2p (<a href="EIPS/eip-8">EIP8</a>) and Light Ethereum Subprotocol, as well as proposed improvements to network protocol specifications of whisper and swarm.</p>
+<p>Includes improvements around devp2p, as well as proposed improvements to network protocol specifications.</p>
 
 <h4><a href="{{"interface"|relative_url}}">Interface</a> ({{site.pages|where:"type","Standards Track"|where:"category","Interface"|size}})</h4>
-<p>Includes improvements around client API/RPC specifications and standards, and also certain language-level standards like method names (<a href="EIPS/eip-6">EIP6</a>) and contract ABIs. The label “interface” aligns with the interfaces repo and discussion should primarily occur in that repository before an EIP is submitted to the EIPs repository.</p>
+<p>Includes improvements around client API/RPC specifications and standards, and also certain language-level standards like method names and contract ABIs. The label “interface” aligns with the interfaces repo and discussion should primarily occur in that repository before an EEP is submitted to the EEPs repository.</p>
 
-<h4><a href="{{"erc"|relative_url}}">ERC</a> ({{site.pages|where:"type","Standards Track"|where:"category","ERC"|size}})</h4>
-<p>Application-level standards and conventions, including contract standards such as token standards (<a href="EIPS/eip-20">ERC20</a>), name registries (<a href="EIPS/eip-137">ERC137</a>), URI schemes (<a href="EIPS/eip-681">ERC681</a>), library/package formats (<a href="EIPS/eip-190">EIP190</a>), and wallet formats (<a href="https://github.com/ethereum/EIPs/issues/85">EIP85</a>).</p>
+<h4><a href="{{"erc"|relative_url}}">EEP</a> ({{site.pages|where:"type","Standards Track"|where:"category","EEP"|size}})</h4>
+<p>Application-level standards and conventions, including contract standards such as token standards, name registries, URI schemes, library/package formats, and wallet formats.</p>
 
 <h3><a href="{{"informational"|relative_url}}">Informational</a> ({{site.pages|where:"type","Informational"|size}})</h3>
-<p>Describes a Ethereum design issue, or provides general guidelines or information to the Ethereum community, but does not propose a new feature. Informational EIPs do not necessarily represent Ethereum community consensus or a recommendation, so users and implementers are free to ignore Informational EIPs or follow their advice.</p>
+<p>Describes a EOS design issue, or provides general guidelines or information to the EOS community, but does not propose a new feature. Informational EEPs do not necessarily represent EOS community consensus or a recommendation, so users and implementers are free to ignore Informational EEPs or follow their advice.</p>
 
 <h3><a href="{{"meta"|relative_url}}">Meta</a> ({{site.pages|where:"type","Meta"|size}})</h3>
-<p>Describes a process surrounding Ethereum or proposes a change to (or an event in) a process. Process EIPs are like Standards Track EIPs but apply to areas other than the Ethereum protocol itself. They may propose an implementation, but not to Ethereum's codebase; they often require community consensus; unlike Informational EIPs, they are more than recommendations, and users are typically not free to ignore them. Examples include procedures, guidelines, changes to the decision-making process, and changes to the tools or environment used in Ethereum development. Any meta-EIP is also considered a Process EIP.</p>
+<p>Describes a process surrounding EOS or proposes a change to (or an event in) a process. Process EEPs are like Standards Track EEPs but apply to areas other than the EOS protocol itself. They may propose an implementation, but not to EOS's codebase; they often require community consensus; unlike Informational EEPs, they are more than recommendations, and users are typically not free to ignore them. Examples include procedures, guidelines, changes to the decision-making process, and changes to the tools or environment used in EOS development. Any meta-EEP is also considered a Process EEP.</p>
