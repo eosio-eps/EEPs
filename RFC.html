@@ -1,0 +1,7 @@
+---
+layout: page
+title: RFC
+---
+
+{% assign eeps=site.pages|where:"type","RFC" %}
+{% include eeptable.html eeps=eeps %}
