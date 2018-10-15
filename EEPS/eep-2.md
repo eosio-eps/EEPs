@@ -42,7 +42,7 @@ generally a website).
 ### Proposed smart contract
 
 We propose the `accountsjson` smart contract, which, very similar to
-[producerjson] and [regproxyinfo], stores a piece of JSON in the
+[producerjson](https://github.com/greymass/producerjson) and [regproxyinfo](https://github.com/AlohaEOS/eos-proxyinfo), stores a piece of JSON in the
 format specified herein.
 
 * Action `set(account_name owner, string json)`
