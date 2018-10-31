@@ -81,7 +81,7 @@ Fields:
 * `website` **string** -- a full-qualified domain name, with connection scheme and optional path.
 * `accounts` **Object** -- holds a map of social media properties, which are to be defined in this specification before added (to avoid collision or conflict).
 * `accounts.[site].handle` **string** -- defines the simplest expression of the handle on the social media website. For example, a Twitter would **not** include the proverbial `@` sign.
-* `accounts.[site].claim` **string** -- the URL of a claim of a link to the account specified in the `owner` field of the `set()` action call. Claims are specified according to the verification protocol and are site specific.
+* `accounts.[site].claim` **string** -- the URL of a claim to link the account specified in the `owner` field of the `set()` action call. Claims are specified according to the _verification protocol_ (see below) and are site specific.
 * `contract` **Object** -- holds information about the deployed contract on the `owner` account (specified in `set()`), it can be used to build the code living at the given revision and repository, and to assert that the code living on chain under the `owner` account, corresponds to the source code living in the repository.
 * `contract.repo` **string** -- holds a URL to a clonable source code repository
 * `contract.rev` **string** -- is the revision of the code in that cloned code repository; it can be a tag, a hash or a branch (provided the latter doesn't move)
@@ -112,32 +112,60 @@ aca376f2,testtesttest
 #### Website verification
 
 Website verifications requires the
-`/.well-known/eosio-accounts/claims.csv` file, as a top-level
-directory of the domain specified in `website`. It strips any path
-element specified in `website`.
+`/.well-known/eosio-accounts/claims.csv` file to be filled, as a
+top-level directory of the domain specified in `website`. Verification
+strips any path element specified in the `website` field of the `json`
+parameter of the `set` action.
 
 The contents of that `claims.csv` file is defined as the _Simple CSV
 file format_ above.
 
-INSET DEFINITION OF: verified
+A website becomes verified when:
+
+1. One of the lines in the retrieved `claims.csv` matches the `owner`
+   account, equal to the `account_name` field in the CSV (for which we
+   saw a `set` action go through), on the chain with the corresponding
+   `chain_id`, matching the `chain_id_prefix` specified in the CSV
+   file.
 
 
 #### GitHub handles and claims
 
-Verification for GitHub happens by verifying a gist published by the
-owner of the account, that includes a file named
+Verification for GitHub happens by verifying a **gist** published by
+the owner of the account, that includes a file named
 `eosio-accounts-claims.csv`; that's plural `accounts` and plural
 `claims`, separated by dashes, ending with `.csv`.
 
 The contents of that `eosio-accounts-claims.csv` file is defined as
 the _Simple CSV file format_ above.
 
-INSET DEFINITION OF: verified
+A claimed GitHub identity becomes verified when all of these are true:
+
+1. One of the lines in retrieved `eosio-accounts-claims.csv` matches
+   the `owner` account, equal to the `account_name` field in the CSV
+   (for which we saw a `set` action go through), on the chain with the
+   corresponding `chain_id`, matching the `chain_id_prefix` specified
+   in the CSV file.
+
+2. The GitHub `handle` claimed under `accounts.github` (in the `json`
+   parameter of the `set` action) matches the creator of the Gist
+   (that would be `owner.login` in the response of the GitHub API).
 
 
 #### Twitter handles and claims
 
+To be defined, but similar to the othe verification methods, verifying
+a Tweet in the format:
 
+```
+I own the #eosio account [account_name] on the chain [chain_id_prefix].
+```
+
+where, again, the `chain_id_prefix` is the first 8 characters of the
+hex representation of the chain's `chain_id`.
+
+
+####
 
 
 ## References
