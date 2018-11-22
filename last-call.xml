@@ -4,12 +4,12 @@ layout: null
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Ethereum EIPs Last Call Review</title>
-    <description>All EIPs which are in the two-week "last call" status, please help review these and provide your feedback!</description>
+    <title>EOS EEPs Last Call Review</title>
+    <description>All EEPs which are in the two-week "last call" status, please help review these and provide your feedback!</description>
     <link>{{ site.url }}</link>
     <atom:link href="{{ site.url }}/last-call.xml" rel="self" type="application/rss+xml" />
-    {% assign eips = site.pages|where:"status","Last Call"|sort:"eip" %}
-    {% for page in eips %}
+    {% assign eeps = site.pages|where:"status","Last Call"|sort:"eep" %}
+    {% for page in eeps %}
       <item>
         <title>{{ page.title | xml_escape }}</title>
         <description>{{ page.content | xml_escape }}</description>

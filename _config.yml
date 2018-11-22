@@ -13,22 +13,22 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Ethereum Improvement Proposals
+title: EOS Enhancement Proposals
 description: >-
-  Ethereum Improvement Proposals (EIPs) describe standards for the Ethereum
+  EOS Enhancement Proposals (EEPs) describe standards for the EOS
   platform, including core protocol specifications, client APIs, and contract
   standards.
-url: "http://eips.ethereum.org"
-twitter_username: ethereum
-github_username:  ethereum
+url: "http://eose.app"
+twitter_username: NEED TWITTER NAME
+github_username:  NEED GITHUB NAME
 header_pages:
  - all.html
  - core.html
  - networking.html
  - interface.html
- - erc.html
- - informational.html
+ - RFC.html
  - meta.html
+
 
 # Build settings
 markdown: kramdown
@@ -41,9 +41,9 @@ permalink: /:slug
 defaults:
   -
     scope:
-      path: "EIPS"
+      path: "EEPS"
     values:
-      layout: "eip"
+      layout: "eep"
 
 exclude:
   - Gemfile
@@ -53,4 +53,4 @@ exclude:
   - vendor/cache/
   - vendor/gems/
   - vendor/ruby/
-  - eip-X.md
+  - eep-X.md

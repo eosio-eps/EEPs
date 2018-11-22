@@ -1,0 +1,4 @@
+{% assign eeps=include.eeps|split:"," %}
+{% for eepnum in eeps %}
+  <a href="{{eepnum|strip|prepend:"eep-" }}">{{eepnum|strip}}</a>{% if forloop.last == false %}, {% endif %}
+{% endfor %}
