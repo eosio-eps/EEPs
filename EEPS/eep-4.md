@@ -242,7 +242,7 @@ There are no standard `vote_value` defined for this `type`. Responses are all `p
 ## References
 
 * `eosio.forum` [repository](https://github.com/eoscanada/eosio.forum
-* EOS Referendum Working Group on [Telegram](https://t.me/xyz)
+* EOS Referendum Working Group on [Telegram](https://t.me/joinchat/HGqkxFAlvsxpRP9c6WvflQ)
 
 ## Copyright
 
