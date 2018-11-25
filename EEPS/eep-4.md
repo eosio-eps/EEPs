@@ -111,7 +111,7 @@ being proposed for a `referendum`.
 Yes/No/Abstain Poll
 -----------
 
-`poll-yn-v1` should be used for any polling that uses only Yes/No/Abstain responses, and 
+`poll-yna-v1` should be used for any polling that uses only Yes/No/Abstain responses, and 
 is not being proposed as an actionable vote for Block Producers. This should only be used for polling sentiment.
 The available responses are always `0`:`No`, `1`:`Yes`, `2`:`Abstain`
 All UIs should display the voting buttons along with their value e.g. "0 - No", "1 - Yes", and "2 - Abstain"
