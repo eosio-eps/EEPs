@@ -8,11 +8,6 @@ category: N/A
 created: 2018-11-22
 ---
 
-STILL NEED TO INCORPORATE
-Sections: the expected result of a vote as displayed on an explorer,
-talk about proper JSON formatting, 
-Next steps: UI integration and feedback
-
 ## Summary
 
 The `eosio.forum` contract, currently found in the [eoscanada/eosio.forum](https://github.com/eoscanada/eosio.forum)
@@ -36,8 +31,7 @@ that was available on the EOS mainnet. Namely, there was need to add definition 
 
 ## Specification
 
-Referendum
------------
+### Referendum
 
 `referendum-v1` should be seen as the only `type` that Block Producers should utilize as a signal 
 to act upon. The available responses are always `0`:`No`, `1`:`Yes`
@@ -70,8 +64,7 @@ Standard `vote_value`:
 If a vote of `type`:`referendum-v1` passes the required thresholds as defined in the goverenance documents,
 Block Producers should act upon the result of this referendum.
 
-Yes/No Poll
------------
+### Yes/No Poll
 
 `poll-yn-v1` should be used for any polling that uses only Yes/No responses, and 
 is not being proposed as an actionable vote for Block Producers. This should only be used for polling sentiment.
@@ -108,8 +101,7 @@ should **not** act in any meaningful way to the results of these polls. This can
 determining a path to take in further discussions, or whether or not a question would be worthwhile
 being proposed for a `referendum`. 
 
-Yes/No/Abstain Poll
------------
+### Yes/No/Abstain Poll
 
 `poll-yna-v1` should be used for any polling that uses only Yes/No/Abstain responses, and 
 is not being proposed as an actionable vote for Block Producers. This should only be used for polling sentiment.
@@ -155,8 +147,7 @@ to help signal community enthusiasm, while essentially delegating their decision
 who cast a Yes or No vote. This can help for deciding if a vote should then become a
 referendum, and whether or not it might receive enough voter participation.
 
-Options Poll
------------
+### Options Poll
 
 `options-v1` should be used for any polling that requires multiple custom responses (`proposer` can
 specify up to 256 different responses). UIs should fetch the possible responses from the "options" array
@@ -197,15 +188,16 @@ Example
 There are no standard `vote_value` defined for this `type`. Responses are all `proposer`-defined.
 
 
-Multi-Select Poll (Checkboxes)
------------
+### Multi-Select Poll (Checkboxes)
 
 `multi-select-v1` should be used for any polling that requires multiple possible repsonses from
 from a single user, with max of 8 possible responses as defined by `proposer`. UIs should fetch 
 the possible responses from the "options" array. 
 
 The `vote_value` pushed by this `type` of `proposal` functions different from the previous types, 
-as it will need to encode multiple values into binary. NEED TO ADD ON HERE
+as it will need to encode multiple values into binary. Within the 8 bits available, a vlue of `0` will 
+signify "unselected" and a value of `1` will signify "selected". With up to 8 responses available, each bit
+will correspond to its position in the array, going from right to left (big-endian). 
 
 ```
 {
@@ -234,10 +226,14 @@ Example
     ]
 }
 ```
+In this example, if a user selected the responses: EOS, B1, and Other, their vote in binary would be
+represented as `00110001`. When converted to decimal, this will be represented by a `vote_value` of `49`.
 
 **_Summary Notes_**
 
 There are no standard `vote_value` defined for this `type`. Responses are all `proposer`-defined.
+Each `vote_value` pushed to chain should be broken down from their decimal representation to their
+binary representation. `0` will signify all unselected responses, while `1` will signify all selected responses. 
 
 ## References
 
