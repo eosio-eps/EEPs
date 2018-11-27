@@ -31,6 +31,19 @@ that was available on the EOS mainnet. Namely, there was need to add definition 
 
 ## Specification
 
+### General Behaviour/Definitions (Apply to all proposal types)
+
+Any `vote_value` that is submitted that does not fall into the expected results will be only be used to count
+towards voter participation of the overall vote (if that metric is being observed). For example, for proposal type
+`referendum-v1`, a `vote_value` of `7` shall not count towards `No` or `Yes`, but the staked amount will count towards
+voter participation for the "15% voter participation threshold".
+
+Votes are weighted using XYZ (CONFIRM WITH DENIS)
+
+Proxy voting should be handled by first delegating the `staked` amount of a user towards its proxy. If the user
+casts a vote on a `proposal`, then their `stake` shall be removed from their proxy and weighted towards their 
+chosen `vote_value` on its own. 
+
 ### Referendum
 
 `referendum-v1` should be seen as the only `type` that Block Producers should utilize as a signal 
@@ -42,7 +55,7 @@ have the knowledge that a `vote_value` of 0 properly signifies their vote of "No
 ```
 {
   "type":"referendum-v1",
-  "content":`string`
+  "content":"content here"
 }
 ```
 
@@ -76,7 +89,7 @@ have the knowledge that a `vote_value` of 0 properly signifies their vote of "No
 ```
 {
   "type":"poll-yn-v1",
-  "content":`string`
+  "content":"content here"
 }
 ```
 
@@ -123,7 +136,7 @@ _For clarification, abstain is defined as "formally decline to vote either for o
 ```
 {
   "type":"poll-yna-v1",
-  "content":`string`
+  "content":"content here"
 }
 ```
 
@@ -159,14 +172,14 @@ referendum, and whether or not it might receive enough voter participation.
 
 `options-v1` should be used for any polling that requires multiple custom responses (`proposer` can
 specify up to 256 different responses). UIs should fetch the possible responses from the "options" array
-All UIs should push a vote value equal to the positon of the repsonse in the table, and
+All UIs should push a vote value equal to the positon of the repsonse in the table (0-indexed), and
 should display the button as "`value` - `response`" so that a user can easily
 verify their vote through any block explorer, while lowering the amount of RAM needed to vote.
 
 ```
 {
   "type":"options-v1",
-  "content":`string`
+  "content":"content here"
   "options": [
     "option1"
     "option2"
@@ -190,10 +203,11 @@ Example
     ]
 }
 ```
+In this example, if a user selected the option "SYS", then the expected `vote_value` will be `1`.
 
 **_Summary Notes_**
 
-There are no standard `vote_value` defined for this `type`. Responses are all `proposer`-defined.
+There are no standard `options` defined for this `type`. Options are all `proposer`-defined.
 
 
 ### Multi-Select Poll (Checkboxes)
@@ -202,15 +216,15 @@ There are no standard `vote_value` defined for this `type`. Responses are all `p
 from a single user, with max of 8 possible responses as defined by `proposer`. UIs should fetch 
 the possible responses from the "options" array. 
 
-The `vote_value` pushed by this `type` of `proposal` functions different from the previous types, 
-as it will need to encode multiple values into binary. Within the 8 bits available, a vlue of `0` will 
-signify "unselected" and a value of `1` will signify "selected". With up to 8 responses available, each bit
-will correspond to its position in the array, going from right to left (big-endian). 
+The `vote_value` pushed by this `type` of `proposal` functions differently from the previous types, 
+as it will need to encode multiple values into an 8 bits unsigned integer (one byte). Within the 8 
+bits available, a value of `0` will  signify "unselected" and a value of `1` will signify "selected". 
+With up to 8 responses available, each bit will correspond to its index in the array (0-indexed), in big-endian form, highest index being the most significant bit in the final value.
 
 ```
 {
   "type":"multi-select-v1",
-  "content":`string`
+  "content":"content here"
   "options": [
     "option1"
     "option2"
@@ -234,18 +248,19 @@ Example
     ]
 }
 ```
+
 In this example, if a user selected the responses: EOS, B1, and Other, their vote in binary would be
 represented as `00110001`. When converted to decimal, this will be represented by a `vote_value` of `49`.
 
 **_Summary Notes_**
 
-There are no standard `vote_value` defined for this `type`. Responses are all `proposer`-defined.
+There are no standard `options` defined for this `type`. Options are all `proposer`-defined.
 Each `vote_value` pushed to chain should be broken down from their decimal representation to their
 binary representation. `0` will signify all unselected responses, while `1` will signify all selected responses. 
 
 ## References
 
-* `eosio.forum` [repository](https://github.com/eoscanada/eosio.forum
+* `eosio.forum` [repository](https://github.com/eoscanada/eosio.forum)
 * EOS Referendum Working Group on [Telegram](https://t.me/joinchat/HGqkxFAlvsxpRP9c6WvflQ)
 
 ## Copyright
