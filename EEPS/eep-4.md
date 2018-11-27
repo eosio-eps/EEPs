@@ -77,6 +77,14 @@ Standard `vote_value`:
 If a vote of `type`:`referendum-v1` passes the required thresholds as defined in the goverenance documents,
 Block Producers should act upon the result of this referendum.
 
+As of writing, Article XI of the Constitution reads as: 
+
+"This Constitution and its subordinate documents shall not be amended except by a vote of the token holders with no less than 15% vote participation among tokens and no fewer than 10% more Yes than No votes, sustained for 30 continuous days within a 120 day period."
+
+"15% vote participation" is defined as `staked`:`total` / `total_EOS_currency_supply` being above 0.15 or not.
+
+"10% more Yes than No votes" is defined as a check on whether `staked`:`1` > ( 0.55 * ( `staked`:`0` + `staked`:`1` )) 
+
 ### Yes/No Poll
 
 `poll-yn-v1` should be used for any polling that uses only Yes/No responses, and 
@@ -113,14 +121,6 @@ As this `type` of poll is not used for an official chain-altering decision, Bloc
 should **not** act in any meaningful way to the results of these polls. This can be useful for 
 determining a path to take in further discussions, or whether or not a question would be worthwhile
 being proposed for a `referendum`. 
-
-As of writing, Article XI of the Constitution reads as: 
-
-"This Constitution and its subordinate documents shall not be amended except by a vote of the token holders with no less than 15% vote participation among tokens and no fewer than 10% more Yes than No votes, sustained for 30 continuous days within a 120 day period."
-
-"15% vote participation" is defined as `staked`:`total` / `total_EOS_currency_supply` being above 0.15 or not.
-
-"10% more Yes than No votes" is defined as a check on whether `staked`:`1` > ( 0.55 * ( `staked`:`0` + `staked`:`1` )) 
 
 ### Yes/No/Abstain Poll
 
