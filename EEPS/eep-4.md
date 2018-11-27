@@ -81,6 +81,8 @@ As of writing, Article XI of the Constitution reads as:
 
 "This Constitution and its subordinate documents shall not be amended except by a vote of the token holders with no less than 15% vote participation among tokens and no fewer than 10% more Yes than No votes, sustained for 30 continuous days within a 120 day period."
 
+_See [pre-launch discussion](https://forums.eosgo.io/discussion/820/article-xvi-v0-3-0-draft-eos-io-constitution-amendment#latest) for further clarification_
+
 "15% vote participation" is defined as `staked`:`total` / `total_EOS_currency_supply` being above 0.15 or not.
 
 "10% more Yes than No votes" is defined as a check on whether `staked`:`1` > ( 0.55 * ( `staked`:`0` + `staked`:`1` )) 
