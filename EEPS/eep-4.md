@@ -171,10 +171,11 @@ referendum, and whether or not it might receive enough voter participation.
 ### Options Poll
 
 `options-v1` should be used for any polling that requires multiple custom responses (`proposer` can
-specify up to 256 different responses). UIs should fetch the possible responses from the "options" array
-All UIs should push a vote value equal to the positon of the repsonse in the table (0-indexed), and
-should display the button as "`value` - `response`" so that a user can easily
-verify their vote through any block explorer, while lowering the amount of RAM needed to vote.
+specify up to 255 different responses, always leaving one option for `Abstain`). UIs should fetch the 
+possible responses from the "options" array. All UIs should push a vote value equal to the positon of 
+the repsonse in the table (0-indexed), and should display the button as "`value` - `response`" so 
+that a user can easily verify their vote through any block explorer, while lowering the amount of RAM 
+needed to vote.
 
 ```
 {
@@ -219,7 +220,8 @@ the possible responses from the "options" array.
 The `vote_value` pushed by this `type` of `proposal` functions differently from the previous types, 
 as it will need to encode multiple values into an 8 bits unsigned integer (one byte). Within the 8 
 bits available, a value of `0` will  signify "unselected" and a value of `1` will signify "selected". 
-With up to 8 responses available, each bit will correspond to its index in the array (0-indexed), in big-endian form, highest index being the most significant bit in the final value.
+With up to 8 responses available, each bit will correspond to its index in the array (0-indexed), in 
+big-endian form, highest index being the most significant bit in the final value.
 
 ```
 {
@@ -262,6 +264,7 @@ binary representation. `0` will signify all unselected responses, while `1` will
 
 * `eosio.forum` [repository](https://github.com/eoscanada/eosio.forum)
 * EOS Referendum Working Group on [Telegram](https://t.me/joinchat/HGqkxFAlvsxpRP9c6WvflQ)
+* EOS Nation's [Vote Tally Repository](https://github.com/EOS-Nation/eosvotes-tally)
 
 ## Copyright
 
