@@ -101,6 +101,14 @@ should **not** act in any meaningful way to the results of these polls. This can
 determining a path to take in further discussions, or whether or not a question would be worthwhile
 being proposed for a `referendum`. 
 
+As of writing, Article XI of the Constitution reads as: 
+
+"This Constitution and its subordinate documents shall not be amended except by a vote of the token holders with no less than 15% vote participation among tokens and no fewer than 10% more Yes than No votes, sustained for 30 continuous days within a 120 day period."
+
+"15% vote participation" is defined as `staked`:`total` / `total_EOS_currency_supply` being above 0.15 or not.
+
+"10% more Yes than No votes" is defined as a check on whether `staked`:`1` > ( 0.55 * ( `staked`:`0` + `staked`:`1` )) 
+
 ### Yes/No/Abstain Poll
 
 `poll-yna-v1` should be used for any polling that uses only Yes/No/Abstain responses, and 
