@@ -38,7 +38,11 @@ towards voter participation of the overall vote (if that metric is being observe
 `referendum-v1`, a `vote_value` of `7` shall not count towards `No` or `Yes`, but the staked amount will count towards
 voter participation for the "15% voter participation threshold".
 
-Votes are weighted using XYZ (CONFIRM WITH DENIS)
+Votes are weighted using information from the `staked` table for voter info. If a user has not voted, then the weight
+of their vote will be taken from the `delband` table. To clarify, a voter's weight should be equal to their self-staked
+and staked-towards-another-account amount. Stake that has been delegated towards an account will not be used when
+calculating the weight of their vote. This is to avoid a user going to a delegation service and renting resources
+to enhance their voting weight.
 
 Proxy voting should be handled by first delegating the `staked` amount of a user towards its proxy. If the user
 casts a vote on a `proposal`, then their `stake` shall be removed from their proxy and weighted towards their 
