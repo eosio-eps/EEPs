@@ -2,7 +2,7 @@
 EEP: 4
 title: Creating standard `type` for use with eosio.forum contract
 author: Josh Kauffman <josh@eoscanada.com>, Alexandre Bourget <alex@eoscanada.com>, Matthieu Vachon <matthieu.vachon@eoscanada.com>
-status: WIP
+status: Draft
 type: RFC
 category: N/A
 created: 2018-11-22
@@ -87,9 +87,15 @@ As of writing, Article XI of the Constitution reads as:
 
 _See [pre-launch discussion](https://forums.eosgo.io/discussion/820/article-xvi-v0-3-0-draft-eos-io-constitution-amendment#latest) for further clarification_
 
-"15% vote participation" is defined as `staked`:`total` / `total_EOS_currency_supply` being above 0.15 or not.
+"15% vote participation" is defined as 
+```
+`staked`:`total` / `total_EOS_currency_supply` being above 0.15 or not.
+```
 
-"10% more Yes than No votes" is defined as a check on whether `staked`:`1` > ( 0.55 * ( `staked`:`0` + `staked`:`1` )) 
+"10% more Yes than No votes" is defined as a check on whether 
+```
+`staked`:`1` > ( 0.55 * ( `staked`:`0` + `staked`:`1` )) 
+```
 
 ### Yes/No Poll
 
@@ -177,11 +183,11 @@ referendum, and whether or not it might receive enough voter participation.
 ### Options Poll
 
 `options-v1` should be used for any polling that requires multiple custom responses (`proposer` can
-specify up to 255 different responses, always leaving one option for `Abstain`). UIs should fetch the 
-possible responses from the "options" array. All UIs should push a vote value equal to the positon of 
-the repsonse in the table (0-indexed), and should display the button as "`value` - `response`" so 
-that a user can easily verify their vote through any block explorer, while lowering the amount of RAM 
-needed to vote.
+specify up to 255 different responses. It is encouraged to always provide one option for `Abstain`). 
+UIs should fetch the possible responses from the "options" array. All UIs should push a vote value 
+equal to the positon of the repsonse in the table (0-indexed), and should display the button as 
+"`value` - `response`" so that a user can easily verify their vote through any block explorer, while 
+lowering the amount of RAM needed to vote.
 
 ```
 {
