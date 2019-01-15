@@ -65,6 +65,11 @@ signature `alwaysfail(account notifier)`
 that is configured as stated above.
 
 
+## Follow-up discussions
+
+are happening here: https://github.com/EOSIO/eosio.contracts/issues/169
+
+
 ## Copyright
 
 Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
