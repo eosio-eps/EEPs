@@ -33,7 +33,7 @@ that was available on the EOS mainnet. Namely, there was need to add definition 
 
 ### General Behaviour/Definitions (Apply to all proposal types)
 
-A `vote_value` of `255` will represent an `Abstain` vote.
+A `vote_value` of `255` will represent an `Abstain` vote, except for `multiselect-v` which wil utilize a `vote_value` of `0` to represent `Abstain`.
 An `Abstain` vote will count towards voter participation of the overall vote (if that metric is being observed). 
 For example, for proposal type `referendum-v1`, a `vote_value` of `255` shall not count towards `No` or `Yes`, but the staked amount will count towards voter participation for the "15% voter participation threshold".
 Any submitted `vote_value` that does not fall into any of the expected results will be ignored. 
@@ -237,7 +237,7 @@ bits available, a value of `0` will  signify "unselected" and a value of `1` wil
 With up to 8 responses available, each bit will correspond to its index in the array (0-indexed), in 
 big-endian form, highest index being the most significant bit in the final value.
 
-A `vote_value` of `255` shall represent `Abstain`
+A `vote_value` of `0` shall represent `Abstain`
 
 ```
 {
@@ -276,7 +276,7 @@ There are no standard `options` defined for this `type`. Options are all `propos
 Each `vote_value` pushed to chain should be broken down from their decimal representation to their
 binary representation. `0` will signify all unselected responses, while `1` will signify all selected responses. 
 
-A `vote_value` of `255` represents `Abstain` for consistency across all proposal types (despite 0 being the natural result from the binary conversion)
+A `vote_value` of `0` represents `Abstain`
 
 ## References
 
