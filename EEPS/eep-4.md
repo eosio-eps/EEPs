@@ -1,7 +1,7 @@
 ---
 EEP: 4
 title: Creating standard `type` for use with eosio.forum contract
-author: Josh Kauffman <josh@eoscanada.com>, Alexandre Bourget <alex@eoscanada.com>, Matthieu Vachon <matthieu.vachon@eoscanada.com>
+author: Josh Kauffman <josh@eoscanada.com>, Alexandre Bourget <alex@eoscanada.com>, Matthieu Vachon <matthieu.vachon@eoscanada.com>, Shaq Kheder <shaq@eostitan.com>
 status: Draft
 type: RFC
 category: N/A
