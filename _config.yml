@@ -13,12 +13,12 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: EOS Enhancement Proposals
+title: EOSIO Enhancement Proposals
 description: >-
-  EOS Enhancement Proposals (EEPs) describe standards for the EOS
+  EOSIO Enhancement Proposals (EEPs) describe standards for the EOSIO
   platform, including core protocol specifications, client APIs, and contract
   standards.
-url: "http://eose.app"
+url: "http://eeps.io"
 twitter_username: NEED TWITTER NAME
 github_username:  NEED GITHUB NAME
 header_pages:
