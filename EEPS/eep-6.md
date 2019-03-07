@@ -141,7 +141,7 @@ If a user were to click the above link with a EOSIO URI compatible application i
 
 ###### QR Code
 
-![qrcode:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA](../assets/eep-5/qrcode.svg)
+![qrcode:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA](../assets/eep-6/qrcode.svg)
 
 Scanning the above QR code on a device with camera capabilities will trigger the URI within the end user specified application.
 
