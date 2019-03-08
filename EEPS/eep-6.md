@@ -392,6 +392,8 @@ N/A
 
 ## Test Cases
 
+**Note**: These examples all use [eosjs v20.0.0-beta3](https://github.com/EOSIO/eosjs/tree/v20.0.0-beta3) for its `Serialize` component.
+
 #### Example - Transaction to encoded PATH
 
 This example will take a signing request and convert it into a `path` string.
@@ -639,7 +641,7 @@ console.log(util.inspect(signingRequest, { showHidden: false, depth: null }));
 
 ## Implementations
 
-The initial implementation of the EOSIO URI Scheme include:
+Existing implementation of the EOSIO URI Scheme (v1) include:
 
 ##### JS Libraries
  - [greymass/eosio-uri](https://github.com/greymass/eosio-uri) ([npm](https://www.npmjs.com/package/eosio-uri)): EOSIO URI encoder/decoder library
