@@ -136,7 +136,7 @@ Example:
 </a>
 ```
 
-If a user were to click the above link with a EOSIO URI compatible application installed, the transaction would be triggered within the end users choosen EOSIO client.
+If a user were to click the above link with a EOSIO URI compatible application installed, the transaction would be triggered within the end users chosen EOSIO client.
 
 
 ###### QR Code
