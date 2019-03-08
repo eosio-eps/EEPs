@@ -128,7 +128,7 @@ The transaction can be triggered with the following examples:
 
 ###### Hyperlink
 
-Example: [Clickable Hyperlink](eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA), with the code below.
+Example:
 
 ```
 <a href="eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA">
