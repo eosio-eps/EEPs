@@ -74,6 +74,7 @@ The following are a set of guidelines in which end user applications that handle
 - EOSIO clients **MUST** decode and present the transaction data in a human readable format for review before creating a signature.
 - EOSIO clients **SHOULD** inform the user of any callback which will be executed upon completion of a signing request.
 - EOSIO clients **SHOULD** register themselves as the handler for the `eosio:` URI scheme by default, so long as no other handlers already exist. If a registered handler already exists, they **MAY** prompt the user to change it upon the first run of the client.
+- EOSIO clients **SHOULD** allow the use of proxies when handling callbacks ([Callback Proxies](#callback-proxies)).
 
 ### URI Format
 
@@ -662,6 +663,26 @@ SGn+dGhlcmUh/k5pY2X+b2b+eW91/nRv/mRlY29kZf5tZf46KQ==
 base64u
 SGn-dGhlcmUh_k5pY2X-b2b-eW91_nRv_mRlY29kZf5tZf46KQ
 ```
+
+##### Callback Proxies
+
+In an effort to help protect the privacy of EOSIO account holders, EOSIO clients which handle signing requests should allow a configurable proxy service to further anonymize outgoing callbacks.
+
+When a callback is made directly from a signing application, the IP address and other identifiable information is sent along with that request could be potentially used in malicious ways. To prevent this, the use of a simple proxy/forwarder can be implemented within the EOSIO client.
+
+For example, if a signing request specified a callback of:
+
+```
+https://example.com/signup?tx=ef82d7c2b81675554a4b58586dcf18c2a03a96ff3b8b408c50b34ed9380f94f5
+```
+
+This URL can be URI Encoded and passed to a trusted/no-log 3rd party service in order to forward the information. If a proxy service resided at `https://eosuriproxy.com/redirect/{{URL}}`, the callback URL could be then passed through the service as such:
+
+```js
+const proxyUri = `https://eosuriproxy.com/redirect/${encodeURIComponent(https://example.com/signup?tx=ef82d7c2b81675554a4b58586dcf18c2a03a96ff3b8b408c50b34ed9380f94f5)}`
+```
+
+The proxy service would intercept the callback and forward the request onto the destination URL.
 
 ##### Chain Aliases
 
