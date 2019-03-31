@@ -346,7 +346,6 @@ Available Parameters:
   * `sig(N)` - Hex-encoded string containing the transaction signature where N signifies the signature 0-index if there are multiple. `sig` is an alias for `sig0`.
   * `tx` - Hex-encoded string containing transaction id*
   * `bn` - The block number the transaction was included in*
-  * `bi` - Hex-encoded string containing the block id*
 
 _* Set to an empty string if unavailable (i.e. `request.broadcast` was set to `false`)._
 
