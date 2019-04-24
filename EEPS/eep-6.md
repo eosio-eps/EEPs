@@ -63,7 +63,7 @@ In determining their level of trust in a particular Extension Network and its BP
 
 ## Resource allocation and BP incentivization mechanisms
 
-All three physical resources (RAM, CPU and Network bandwidth) could be initially sold using EOS on the Mainnet and be allocated to the Extension Network. On top of the initial sale of resources, BPs could be rewarded from fees from secondary transactions of these resources, could capture an annual interest rate on held resources, could set resources pricing or use algorithmic market-making could be used like on the Mainnet.
+All three physical resources (RAM, CPU and Network bandwidth) could be initially sold using EOS on the Mainnet and be allocated to the Extension Network. On top of the initial sale of resources, BPs could be rewarded from fees from secondary transactions of these resources, could capture an annual interest rate on held resources, could set resources pricing or use algorithmic market-making like on the Mainnet.
 
 Other mechanisms could be thought of, but all in all, something close to the cost (plus margin, of perhaps 100%) would be charged to those requiring a decentralized database.
 
