@@ -3,7 +3,7 @@ EEP: 6
 title: EOS Mainnet Extension Chains
 status: Draft
 type: RFC
-author: Mathieu Boulianne, Richard Reiner, Guillaume Babin, Alexandre Bourget
+author: Alexandre Bourget, Richard Reiner, Guillaume Babin, Mathieu Boulianne
 created: 2019-04-20
 ---
 
