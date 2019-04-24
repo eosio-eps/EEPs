@@ -108,7 +108,8 @@ When the EOS mainnet has 1 billion users, a good chunk of the RAM will be there 
 
 ## Follow up discussions
 
-Please follow the GitHub issue https://github.com/eoscanada/EEPs/issues/32 for further discussion.
+* [GitHub issue](https://github.com/eoscanada/EEPs/issues/32) for further discussion.
+* [Telegram channel](https://t.me/eos_extensions)
 
 
 ## Copyright
