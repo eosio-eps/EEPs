@@ -1,24 +1,23 @@
 ---
 EEP: ...
-title: EOSIO URI Scheme
+title: EOSIO Signing Request
 author: Aaron Cox (@aaroncox), Johan Nordberg (@jnordberg)
 status: Draft
 type: Standards Track
 category: Interface
-created: 2019-XX-YY (2019-03-01)
+created: 2019-XX-YY (2019-05-15)
 ---
 
-# EOSIO URI Scheme
+# EOSIO Signing Request
 
 **Table of Contents**
 
 - [Summary](#Summary)
 - [Abstract](#Abstract)
 - [Motivation](#Motivation)
-- [Rationale](#Rationale)
-- [EOSIO Client Guidelines](#EOSIO-Client-Guidelines)
 - [Specification](#Specification)
 - [Backwards Compatibility](#Backwards-Compatibility)
+- [Use Cases](#Use-Cases)
 - [Test Cases](#Test-Cases)
 - [Implementations](#Implementations)
 - [Appendix](#Appendix)
@@ -35,29 +34,26 @@ created: 2019-XX-YY (2019-03-01)
 
 ## Summary
 
-A standard for an EOSIO-based URI scheme to facilitate the signing of transactions.
+A standard for an EOSIO-based signing request payloads to allow communication between applications and signature providers.
 
 ## Abstract
 
-EOSIO URIs encapsulate transaction data for use within QR-codes and hyperlinks, providing a simple cross-application signaling method between very loosely coupled applications. A standardized URI data format allows instant invocation of specific transaction templates within the user's preferred EOSIO client application.
+EOSIO Signing Requests encapsulate transaction data for use within multiple mediums (e.g. QR codes and hyperlinks), providing a simple cross-application signaling method between very loosely coupled applications. A standardized request data payload allows instant invocation of specific transaction templates within the user's preferred EOSIO signature provider.
 
 ## Motivation
 
-The ability to represent a transaction in a standard URI format has been a major factor in driving end user adoption within many blockchain ecosystems. Introducing a similar mechanism into the EOSIO ecosystem would speed up adoption by providing a versatile and widely supported protocol that works almost everywhere.
+The ability to represent a transaction in a standardized signing request format has been a major factor in driving end user adoption within many blockchain ecosystems. Introducing a similar mechanism into the EOSIO ecosystem would speed up adoption by providing a versatile data format which allows requests across any medium.
 
-While other protocols already exist within EOSIO for more intricate cross-application communication - this proposal serves as the most simple implementation. It utilizes an operating systems built-in protocol handlers to route requests from any medium to the users selected client application for further interaction.  
-
-This familiar and convenient method of triggering cross-application events paired with the proper end user experience will enable many new use cases for EOSIO blockchains.
+While other protocols already exist within EOSIO for more intricate cross-application communication - this proposal seeks to establish a primitive request payload for use in any type of application.
 
 ## Specification
 
-The following specification sets out to define the technical standards used and the actual composition of an EOSIO URI. While this written specification centers around JavaScript/JSON, the concepts are be compatible within any modern programming environment.
+The following specification sets out to define the technical standards used and the actual composition of an EOSIO Signing Request. While this written specification centers around JavaScript/JSON, the concepts are be compatible within any modern programming environment.
 
 **Table of Contents - Specification**
-- [EOSIO Client Guidelines](#eosio-client-guidelines)
-- [URI Format](#uri-format)
-- [URI Usage](#uri-usage)
-- [Signing Request](#signing-request)
+- [EOSIO Client Implementation Guidelines](#eosio-client-implementation-guidelines)
+- [Signing Request](#signing-request-specification)
+  - [Data Format](#data-format)
   - [Header](#header)
   - [Payload](#payload)
     - [`req`](#req)
@@ -66,43 +62,27 @@ The following specification sets out to define the technical standards used and 
     - [`chain_id`](#chain_id)
 
 
-### EOSIO Client Guidelines
+### EOSIO Client Implementation Guidelines
 
-The following are a set of guidelines in which end user applications that handle EOSIO URIs should respect.
+The following are a set of guidelines in which end user applications (e.g. signature providers) that handle EOSIO Signing Requests should respect.
 
-- EOSIO clients **MUST NOT** automatically act upon the data contained within a URI without the user's authorization.
+- EOSIO clients **MUST NOT** automatically act upon the data contained within a Signing Request without the user's authorization.
 - EOSIO clients **MUST** decode and present the transaction data in a human readable format for review before creating a signature.
 - EOSIO clients **SHOULD** inform the user of any callback which will be executed upon completion of a signing request.
 - EOSIO clients **SHOULD** register themselves as the handler for the `eosio:` URI scheme by default, so long as no other handlers already exist. If a registered handler already exists, they **MAY** prompt the user to change it upon the first run of the client.
 - EOSIO clients **SHOULD** allow the use of proxies when handling callbacks ([Callback Proxies](#callback-proxies)).
 
-### URI Format
+### Signing Request Specification
 
-The EOSIO URI structure uses the `scheme` and `path` components defined within [RFC 3986](https://www.ietf.org/rfc/rfc3986.txt).
-
-```
-eosio:<signing_request>
-\___/ \_______________/
-  |         |
-  scheme    path
-```
-
-The `scheme` that defines the URI format is `eosio`. Any client application capable of handling EOSIO transactions can register itself as the default system handler for this scheme.
-
-The `path` portion of the URI is a represents a "[Signing Request](#signing-request)". The data that makes up each request is serialized using the same binary format as the EOSIO blockchain. Each request is also encoded using a url-safe Base64 variant ([appx: Base64u](#base64u)) and optionally compressed using zlib deflate ([appx: Compression](#compression)).
-
-###### Format Example
-
-The following URI is an example of a `vote` action on the `eosio.forum` contract. Within the transaction data, it specifies the `rex4all` proposal with a vote of `1` (Approve).
+In its encapsulated form, and EOSIO Signing Request is a data structure which has been converted to [base64u](#Base64u) (URL safe) and then [compressed](#Compression), and is representable as a string:
 
 ```
-eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA
-\___/ \__________________________________________________/
-  |         |
-  scheme    path
+gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA
 ```
 
-Once decoded/inflated ([decode URI](https://greymass.github.io/eosio-uri-builder/gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA)) it will return the following signing request:
+The above payload is a signing request for a transaction to perform the `vote` action on the `eosio.forum` contract. The data contained within the action itself also specifies the `rex4all` proposal with a vote of `1` (Approve).
+
+Once decoded/inflated ([preview decoded payload](https://greymass.github.io/eosio-uri-builder/gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA)) it will return the following signing request:
 
 ```
 { req:
@@ -116,40 +96,11 @@ Once decoded/inflated ([decode URI](https://greymass.github.io/eosio-uri-builder
   chain_id: [ 'uint8', 1 ] }
 ```
 
-### URI Usage
+This request payload can then be used to prompt an end user in their preferred signature provider. The provider can then complete any required templating, sign the transaction, and optionally trigger a callback or broadcast the signed transaction.
 
-Many URI schemes are commonly used within hyperlinks (anchor tags) in HTML and QR codes to allow a camera-based transfer of information in mobile devices. Taking the transaction from the above example of a referendum vote action, with a URI of:
+### Data Format
 
-```
-eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA
-```
-
-The transaction can be triggered with the following examples:
-
-
-###### Hyperlink
-
-Example:
-
-```
-<a href="eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA">
-  Clickable Hyperlink
-</a>
-```
-
-If a user were to click the above link with a EOSIO URI compatible application installed, the transaction would be triggered within the end users chosen EOSIO client.
-
-
-###### QR Code
-
-![qrcode:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA](../assets/eep-6/qrcode.svg)
-
-Scanning the above QR code on a device with camera capabilities will trigger the URI within the end user specified application.
-
-
-### Signing Request
-
-The decoded `path` of each URI consists of two parts:
+The decoded payload of each Signing Request consists of two parts:
 
   - a 1-byte header
   - a X-byte payload (`X = length(path) - 1`)
@@ -159,14 +110,14 @@ header  request
 1000000100000000000000000000...
 ```
 
-### Header
+#### Header
 
 The header consists of the first 8 bits, with the first 7 bits representing the protocol version and the last bit denoting if the data is compressed. The protocol version this document describes is `1`, making the only valid headers:
 
 - `0x01` a uncompressed payload
 - `0x81` a compressed payload
 
-### Payload
+#### Payload
 
 All data beyond the first 8 bits forms the signing requests payload. This payload uses the following schema for its data:
 
@@ -181,7 +132,7 @@ Each of these fields is further outlined below. An extended schema of this paylo
 
 ---
 
-#### `req`
+##### `req`
 
 The actual EOSIO transaction(s) involved in a signing request exist within the `req` parameter. This data consists of an array where the first value is the `type` and the second value is the `data`.
 
@@ -311,7 +262,7 @@ Example:
 
 ---
 
-#### `broadcast`
+##### `broadcast`
 
 Each signing request has a boolean field for whether or not the signed transaction should be broadcast to the associated chain after a signature has been created.
 
@@ -321,7 +272,7 @@ Setting `broadcast` to `false` can be used in conjunction with the `callback` pa
 
 ---
 
-#### `callback`
+##### `callback`
 
 An optional parameter of the signing request is the `callback`, which when set indicates how the EOSIO client should proceed after the transaction has completed. The `callback` itself is comprised of the following data:
 
@@ -334,7 +285,7 @@ struct callback {
 
 The `url` as defined in the callback is what an EOSIO client should trigger after the transaction has been signed or broadcast.
 
-The `background` value dictates the behaviour of EOSIO client, indicating whether it should trigger the callback in the native OS handler (e.g. opening a web browser for `http` or `https`) or perform it in the background. If set to `true` and the URL protocol is either `http` or `https`, EOSIO clients should `POST` to the URL instead of redirecting/opening it in a web browser. For other protocols background behavior is up to the implementer.
+The `background` value dictates the behavior of EOSIO client, indicating whether it should trigger the callback in the native OS handler (e.g. opening a web browser for `http` or `https`) or perform it in the background. If set to `true` and the URL protocol is either `http` or `https`, EOSIO clients should `POST` to the URL instead of redirecting/opening it in a web browser. For other protocols background behavior is up to the implementer.
 
 The callback URL also includes simple templating with some response parameters. The templating format syntax is `{{param_name}}`, e.g.:
 
@@ -352,7 +303,7 @@ _* Set to an empty string if unavailable (i.e. `request.broadcast` was set to `f
 ---
 
 
-#### `chain_id`
+##### `chain_id`
 
 The `chain_id` parameter accepts two different formats, a [Chain Alias]() or a [Chain ID]().
 
@@ -382,13 +333,86 @@ Alternatively, a 32-byte ID value can be passed as the `chain_id` to specify any
 
 This is useful for local testnets or newer chains which might not have an alias yet.
 
-## Rationale
-
-TODO
-
 ## Backwards Compatibility
 
 N/A
+
+## Use Cases
+
+The EOSIO Signing Request format enables many different methods of communication to convey request data from any application to any signature provider.
+
+The following are a few examples of how these payloads could be transmitted.
+
+### Custom URI Scheme Format
+
+The EOSIO Signing Request in a custom URI scheme format uses the `scheme` and `path` components defined within [RFC 3986](https://www.ietf.org/rfc/rfc3986.txt).
+
+```
+eosio:<signing_request>
+\___/ \_______________/
+  |         |
+  scheme    path
+```
+
+The `scheme` that defines the URI format is `eosio`. Any client application capable of handling EOSIO transactions can register itself as the default system handler for this scheme.
+
+The `path` portion of the URI is a represents a "[Signing Request](#signing-request)". The data that makes up each request is serialized using the same binary format as the EOSIO blockchain. Each request is also encoded using a url-safe Base64 variant ([appx: Base64u](#base64u)) and optionally compressed using zlib deflate ([appx: Compression](#compression)).
+
+###### Format Example
+
+The following URI is an example of a `vote` action on the `eosio.forum` contract. Within the transaction data, it specifies the `rex4all` proposal with a vote of `1` (Approve).
+
+```
+eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA
+\___/ \__________________________________________________/
+  |         |
+  scheme    path
+```
+
+Once decoded/inflated ([decode URI payload](https://greymass.github.io/eosio-uri-builder/gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA)) it will return the following signing request:
+
+```
+{ req:
+   [ 'action[]',
+     [ { account: 'eosio.forum',
+         name: 'vote',
+         authorization: [ { actor: '............1', permission: '............1' } ],
+         data: '0100000000000000000000204643BABA0100' } ] ],
+  broadcast: true,
+  callback: { url: '', background: false },
+  chain_id: [ 'uint8', 1 ] }
+```
+
+### URI Usage
+
+Many URI schemes are commonly used within hyperlinks (anchor tags) in HTML and QR codes to allow a camera-based transfer of information in mobile devices. Taking the transaction from the above example of a referendum vote action, with a URI of:
+
+```
+eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA
+```
+
+The transaction can be triggered with the following examples:
+
+###### Hyperlink
+
+Example:
+
+```
+<a href="eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA">
+  Clickable Hyperlink
+</a>
+```
+
+If a user were to click the above link with a EOSIO URI compatible application installed, the transaction would be triggered within the end users chosen EOSIO client.
+
+
+### Custom QR Code Format
+
+As well as being portable enough for usage within a URI/URL format, the same payload data can also be represented as a QR Code to be consumed by any device with QR scanning capabilities.
+
+![qrcode:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA](../assets/eep-7/qrcode.svg)
+
+Scanning the above QR code on a device with camera capabilities could trigger the payload within the end user specified signature provider.
 
 ## Test Cases
 
@@ -417,7 +441,7 @@ const textDecoder = new util.TextDecoder();
 // The signing request to be encoded
 const signingRequest = {
   // "chain_id": [ "uint8", 1 ],
-  "chain_id": [ "checksum256", "aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906" ],
+  "chain_id": [ "checksum256", "aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906"],
   "req": [
     "action[]",
     [
@@ -646,7 +670,11 @@ Existing implementation of the EOSIO URI Scheme (v1) include:
 ##### JS Libraries
  - [greymass/eosio-uri](https://github.com/greymass/eosio-uri) ([npm](https://www.npmjs.com/package/eosio-uri)): EOSIO URI encoder/decoder library
 
+##### Signature Providers
+- [Anchor](https://github.com/greymass/eos-voter): Signature Provider (formerly "eos-voter", or "Greymass Wallet")
+
 ##### User Interfaces
+- [EOSIO.to](https://eosio.to) (([src](https://github.com/greymass/eosio.to)): Provides Signing Request verification and triggering via HTTP links.
 - [EOSIO URI Builder](https://greymass.github.io/eosio-uri-builder/) ([src](https://github.com/greymass/eosio-uri-builder)): User Interface to encode/decode EOSIO URIs
 
 ## Appendix
