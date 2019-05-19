@@ -5,7 +5,7 @@ author: Aaron Cox (@aaroncox), Johan Nordberg (@jnordberg)
 status: Draft
 type: Standards Track
 category: Interface
-created: 2019-XX-YY (2019-05-15)
+created: 2019-05-19
 ---
 
 # EOSIO Signing Request
