@@ -1,11 +1,13 @@
 ---
 EEP: ...
-title: EOSIO Signing Request
+title: EOSIO Signing Requests
 author: Aaron Cox (@aaroncox), Johan Nordberg (@jnordberg)
+revision: 2
 status: Draft
 type: Standards Track
 category: Interface
 created: 2019-05-19
+updated: 2020-01-16
 ---
 
 # EOSIO Signing Request
@@ -29,16 +31,17 @@ created: 2019-05-19
     - [EOSIO ABI](#Signing-Request-represented-as-a-EOSIO-C-struct)
     - [EOSIO C++ struct](#Signing-Request-represented-as-an-EOSIO-ABI)
   - [Signing Request - Templating](#Signing-Request---Templating)
+- [Change Log](#Change-Log)
 - [Acknowledgements](#Acknowledgements)
 - [Copyright](#Copyright)
 
 ## Summary
 
-A standard for an EOSIO-based signing request payloads to allow communication between applications and signature providers.
+A standard for an EOSIO-based signing request payload to allow communication between applications and signature providers.
 
 ## Abstract
 
-EOSIO Signing Requests encapsulate transaction data for use within multiple mediums (e.g. QR codes and hyperlinks), providing a simple cross-application signaling method between very loosely coupled applications. A standardized request data payload allows instant invocation of specific transaction templates within the user's preferred EOSIO signature provider.
+EOSIO Signing Requests encapsulate transaction data for transport within multiple mediums (e.g. QR codes and hyperlinks), providing a simple cross-application signaling method between very loosely coupled applications. A standardized request data payload allows instant invocation of specific transaction templates within the user's preferred EOSIO signature provider.
 
 ## Motivation
 
@@ -69,34 +72,54 @@ The following are a set of guidelines in which end user applications (e.g. signa
 - EOSIO clients **MUST NOT** automatically act upon the data contained within a Signing Request without the user's authorization.
 - EOSIO clients **MUST** decode and present the transaction data in a human readable format for review before creating a signature.
 - EOSIO clients **SHOULD** inform the user of any callback which will be executed upon completion of a signing request.
-- EOSIO clients **SHOULD** register themselves as the handler for the `eosio:` URI scheme by default, so long as no other handlers already exist. If a registered handler already exists, they **MAY** prompt the user to change it upon the first run of the client.
+- EOSIO clients **SHOULD** register themselves as the handler for the `esr:` URI scheme by default, so long as no other handlers already exist. If a registered handler already exists, they **MAY** prompt the user to change it upon request.
 - EOSIO clients **SHOULD** allow the use of proxies when handling callbacks ([Callback Proxies](#callback-proxies)).
+- EOSIO clients **SHOULD** use the recommended MIME type when applicable in their implementations.
 
 ### Signing Request Specification
 
 In its encapsulated form, and EOSIO Signing Request is a data structure which has been converted to [base64u](#Base64u) (URL safe) and then [compressed](#Compression), and is representable as a string:
 
 ```
-gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA
+gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA
 ```
 
-The above payload is a signing request for a transaction to perform the `vote` action on the `eosio.forum` contract. The data contained within the action itself also specifies the `rex4all` proposal with a vote of `1` (Approve).
+The above payload is a signing request for a transaction to perform the `voteproducer` action on the `eosio` contract. The data contained within the action itself also specifies the proxy of `greymassvote`.
 
-Once decoded/inflated ([preview decoded payload](https://greymass.github.io/eosio-uri-builder/gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA)) it will return the following signing request:
+Once decoded/inflated ([preview decoded payload](https://greymass.github.io/eosio-uri-builder/gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA)) it will return the following SigningRequest:
 
 ```
-{ req:
-   [ 'action[]',
-     [ { account: 'eosio.forum',
-         name: 'vote',
-         authorization: [ { actor: '............1', permission: '............1' } ],
-         data: '0100000000000000000000204643BABA0100' } ] ],
-  broadcast: true,
-  callback: { url: '', background: false },
-  chain_id: [ 'uint8', 1 ] }
+{
+  version: 2,
+  data: {
+    chain_id: [ 'chain_alias', 1 ],
+    req: [
+      'action[]',
+      [
+        {
+          account: 'eosio',
+          name: 'voteproducer',
+          authorization: [ { actor: '............1', permission: '............2' } ],
+          data: '0100000000000000A032DD181BE9D56500'
+        }
+      ]
+    ],
+    flags: 1,
+    callback: '',
+    info: []
+  },
+  textEncoder: TextEncoder { encoding: 'utf-8' },
+  textDecoder: TextDecoder { encoding: 'utf-8', fatal: false, ignoreBOM: false },
+  zlib: {
+    deflateRaw: [Function: deflateRaw],
+    inflateRaw: [Function: inflateRaw]
+  },
+  abiProvider: { getAbi: [AsyncFunction: getAbi] },
+  signature: undefined
+}
 ```
 
-This request payload can then be used to prompt an end user in their preferred signature provider. The provider can then complete any required templating, sign the transaction, and optionally trigger a callback or broadcast the signed transaction.
+This SigningRequest can then be used to prompt action from an end user in their preferred signature provider. The signature provider can then resolve the transaction and complete any required templating, sign the transaction, and optionally trigger a callback and/or broadcast the signed transaction to the blockchain.
 
 ### Data Format
 
@@ -107,52 +130,63 @@ The decoded payload of each Signing Request consists of two parts:
 
 ```
 header  request
-1000000100000000000000000000...
+1000001000000000000000000000...
 ```
 
 #### Header
 
-The header consists of the first 8 bits, with the first 7 bits representing the protocol version and the last bit denoting if the data is compressed. The protocol version this document describes is `1`, making the only valid headers:
+The header consists of the first 8 bits, with the first 7 bits representing the protocol version and the last bit denoting if the data is compressed. The protocol version this document describes is `2`, making the only valid headers:
 
-- `0x01` a uncompressed payload
-- `0x81` a compressed payload
+- `0x02` a uncompressed payload
+- `0x82` a compressed payload
 
 #### Payload
 
-All data beyond the first 8 bits forms the signing requests payload. This payload uses the following schema for its data:
+All data beyond the first 8 bits forms the representation of the SigningRequest. This structure is as follows:
 
-  param       | description
- -------------|-------------
-  `req`       | the action, list of actions, or full transaction that should be signed
-  `broadcast` | whether the resulting transaction should be broadcast after signing
-  `callback`  | a templated URL that should be called after the transaction is broadcast/signed
-  `chain_id`  | 32-byte id of target chain or 1-byte alias ([Chain Aliases](#chain-aliases))
+  param            | description
+ ------------------|-------------
+  `abiProvider`    | A method to provide raw ABI data (when needed)
+  `data`           | The signing request data (see below)
+  `data.callback`  | A templatable URL a POST request should be triggered to after the transaction is broadcast/signed
+  `data.chain_id`  | 32-byte id of target chain or 1-byte alias ([Chain Aliases](#chain-aliases))
+  `data.flags`     | Various flags for how to process this transaction
+  `data.info`      | Optional metadata to pass along with the request
+  `data.req`       | The action, list of actions, or full transaction that should be signed
+  `signature`      | An array containing existing signatures if any were provided
+  `textEncoder`    | The text encoder used for processing
+  `textDecoder`    | The text decoder used for processing
+  `version`        | The protocol version of this signing request
 
-Each of these fields is further outlined below. An extended schema of this payload can be found in the Appendix as both an [EOSIO C++ struct](#signing-request-represented-as-a-eosio-c-struct) and an [EOSIO ABI](#signing-request-represented-as-an-eosio-abi).
+Many of these fields are further outlined below. An extended schema of this payload can be found in the Appendix as both an [EOSIO C++ struct](#signing-request-represented-as-a-eosio-c-struct) and an [ABI of ESR](#signing-request-represented-as-an-eosio-abi).
 
 ---
 
-##### `req`
+##### `data.req`
 
-The actual EOSIO transaction(s) involved in a signing request exist within the `req` parameter. This data consists of an array where the first value is the `type` and the second value is the `data`.
+The actual EOSIO transaction(s) involved in a signing request exist within the `data.req` parameter. This data consists of an array where the first value is the `type` of request and the second value is the `data`.
 
 The `type` of data can be one of the following:
 
-  - `action`: a single EOSIO contract action
-  - `action[]`: a list of multiple EOSIO contract actions
-  - `transaction`: a full transaction which requires a signature (optionally templating)
+  - `action`: a request containing data for a single EOSIO contract action
+  - `action[]`: a request containing a array of actions for one or more EOSIO contract actions
+  - `identity`: a request type used to facilitate identity requests (login, etc)
+  - `transaction`: a request containing a full EOSIO transaction
 
 Example data structures of each are listed below.
 
-###### `type: 'action'` (single action)
+###### `type: 'action'` (a single contract action)
 
-The most basic form of signing request is to pass a single contract action and the data to include when submitting. In the most basic syntax, this data can be illustrated as:
+The most basic form of a signing request is to pass a single contract action and the data to include when creating a signature. In simple terms this data can be illustrated as:
 
 ```
-['action', { ... action }]
+[
+  'action',
+  { ... action }
+]
 ```
 
-The first value being `action` indicates that the second value is a singular action that needs to be processed and included in a transaction using current TAPoS values.
+The first value (type) being `action` indicates that the second value is an object containing a singular action that needs to be both templated and included in a transaction using current TAPoS values.
 
 Example:
 
@@ -163,13 +197,10 @@ Example:
     {
       account: 'eosio.forum',
       name: 'vote',
-      authorization: [ { actor: '............1', permission: '............1' } ],
+      authorization: [ { actor: '............1', permission: '............2' } ],
       data: '0100000000000000000000204643BABA0100'
     }
   ],
-  broadcast: true,
-  callback: { url: '', background: false },
-  chain_id: [ 'uint8', 1 ]
 }
 ```
 
@@ -178,10 +209,17 @@ Example:
 The second option is to pass an array of actions, which can all be bundled together into a single transaction. The simple syntax using this method is as follows:
 
 ```
-['action[]', [<action1>, <action2>, ...]]
+[
+  'action[]',
+  [
+    <action1>,
+    <action2>,
+    ...
+  ]
+]
 ```
 
-The first value being `action[]` indicates that the second value is a list of multiple action that needs to be processed into a single transaction using current TAPoS values.
+The first value (type) being `action[]` indicates that the second value is an array of multiple actions that needs to be both templated and included in a transaction using current TAPoS values.
 
 Example:
 
@@ -190,30 +228,34 @@ Example:
   req: [
     'action[]',
     [
-      { account: 'eosio.forum',
-        name: 'vote',
-        authorization: [ { actor: '............1', permission: '............1' } ],
-        data: '0100000000000000000000204643BABA0100' },
-      { account: 'eosio.forum',
-        name: 'vote',
-        authorization: [ { actor: '............1', permission: '............1' } ],
-        data: '0100000000000000000000204643BABA0100' },
+      {
+        account: 'eosio.token',
+        name: 'transfer',
+        authorization: [ { actor: '............1', permission: '............2' } ],
+        data: { ... action data }
+      },
+      {
+        account: 'eosio.token',
+        name: 'transfer',
+        authorization: [ { actor: '............1', permission: '............2' } ],
+        data: { ... action data }
+      }
     ]
   ],
-  broadcast: true,
-  callback: { url: '', background: false },
-  chain_id: [ 'uint8', 1 ]
 }
 ```
 
 ###### `type: 'transaction'` (full transaction)
 
-The final option is to pass a nearly complete transaction (including TAPoS values) directly to the EOSIO client, which will only require minor templating and the addition of the signature. This option is primarily to allow for flexibility, but most use cases should likely use the `action` or `action[]` method to avoid having to deal with this complication.
+The most complex option is to pass a nearly complete transaction (including TAPoS values) directly to the EOSIO client, which will only require minor templating and the addition of a signature. This option is primarily to allow for flexibility, but most use cases should likely use the `action` or `action[]` method to avoid having to deal with the complication of building full transactions.
 
 **Note**: By going this route, the EOSIO client will either have to respect the `expiration` and TAPoS values or alter them. By using the `transaction` method, URIs may have a limited shelf life which can make statically sharing URIs more difficult.
 
 ```
-['transaction', { ... transaction }]
+[
+  'transaction',
+  { ... transaction }
+]
 ```
 
 Example:
@@ -242,7 +284,7 @@ Example:
               "authorization": [
                 {
                   "actor": "............1",
-                  "permission": "............1"
+                  "permission": "............2"
                 }
               ],
               "data": "0100000000000000000000204643BABA0100"
@@ -254,38 +296,26 @@ Example:
       }
     }
   ],
-  broadcast: true,
-  callback: { url: '', background: false },
-  chain_id: [ 'uint8', 1 ]
 }
 ```
 
 ---
 
-##### `broadcast`
+##### `data.broadcast`
 
-Each signing request has a boolean field for whether or not the signed transaction should be broadcast to the associated chain after a signature has been created.
+Each signing request has a boolean field for whether or not the signed transaction should be broadcast to the associated blockchain after a signature has been created.
 
 By default, the `broadcast` parameter is set to `true`.
 
-Setting `broadcast` to `false` can be used in conjunction with the `callback` parameter to prove ownership of a specific public key. This functionality allows for the creation of "sign-in" like features, where an application can request you prove your identity by signing an arbitrary transaction and returning the signature for verification.
+Setting the `broadcast` field to `false` and specifying a `callback` will allow the signature provider to create a signature for the transaction but prevent the signature provider from broadcasting the transaction to the blockchain. The signature (and additional data) instead will then be passed to the `callback` URL, allowing the originator of the request to finalize the transaction and broadcast if needed.
 
 ---
 
-##### `callback`
+##### `data.callback`
 
-An optional parameter of the signing request is the `callback`, which when set indicates how the EOSIO client should proceed after the transaction has completed. The `callback` itself is comprised of the following data:
+An optional parameter of the signing request is the `callback`, which when set indicates how an EOSIO client should proceed after the transaction has completed. The `callback` itself is a string containing a full URL. This URL will be triggered after the transaction has been either signed or broadcast based on the `flags` provided.
 
-```cpp
-struct callback {
-    string url;
-    bool background;
-};
-```
-
-The `url` as defined in the callback is what an EOSIO client should trigger after the transaction has been signed or broadcast.
-
-The `background` value dictates the behavior of EOSIO client, indicating whether it should trigger the callback in the native OS handler (e.g. opening a web browser for `http` or `https`) or perform it in the background. If set to `true` and the URL protocol is either `http` or `https`, EOSIO clients should `POST` to the URL instead of redirecting/opening it in a web browser. For other protocols background behavior is up to the implementer.
+The `flags` value dictates the behavior of EOSIO client, indicating whether it should trigger the callback in the native OS handler (e.g. opening a web browser for `http` or `https`) or perform it in the background. If set to `true` and the URL protocol is either `http` or `https`, EOSIO clients should `POST` to the URL instead of redirecting/opening it in a web browser. For other protocols background behavior is up to the implementer.
 
 The callback URL also includes simple templating with some response parameters. The templating format syntax is `{{param_name}}`, e.g.:
 
@@ -294,22 +324,26 @@ The callback URL also includes simple templating with some response parameters. 
 
 Available Parameters:
 
-  * `sig(N)` - Hex-encoded string containing the transaction signature where N signifies the signature 0-index if there are multiple. `sig` is an alias for `sig0`.
-  * `tx` - Hex-encoded string containing transaction id*
-  * `bn` - The block number the transaction was included in*
-
-_* Set to an empty string if unavailable (i.e. `request.broadcast` was set to `false`)._
+  - `bn`: Block number hint (only present if transaction was broadcast).
+  - `ex`: Expiration time used when resolving request.
+  - `rbn`: Reference block num used when resolving request.
+  - `req`: The originating signing request encoded as a uri string.
+  - `rid`: Reference block id used when resolving request.
+  - `sa`: Signer authority, aka account name.
+  - `sp`: Signer permission, e.g. "active".
+  - `tx`: Transaction ID as HEX-encoded string.
+  - `sig`: The first signature.
+  - `sigX`: All signatures are 0-indexed as `sig0`, `sig1`, etc.
 
 ---
 
-
 ##### `chain_id`
 
-The `chain_id` parameter accepts two different formats, a [Chain Alias]() or a [Chain ID]().
+The `chain_id` parameter accepts two different formats, a [Chain Alias](#chain_alias) or a [Chain ID](#chain_id).
 
 ###### Chain Alias
 
-In an effort to maintain a low payload size, a predefined list of aliases for specific `chain_id` values has been defined.
+In an effort to maintain a lower payload size, a predefined list of aliases for specific `chain_id` values has been defined and can be specified using an array with `uint8` followed by the ID of the chain the request should use. The following is an example of how to use the `chain_id` with a value of `1`:
 
 ```
 {
@@ -322,7 +356,7 @@ A full list of available [Chain Aliases](#chain-aliases) can be found in the App
 
 ###### Chain ID
 
-Alternatively, a 32-byte ID value can be passed as the `chain_id` to specify any chain that doesn't have an alias associated.
+Alternatively, a 32-byte ID value can be passed as the `chain_id` to specify any specific chain.
 
 ```
 {
@@ -331,11 +365,11 @@ Alternatively, a 32-byte ID value can be passed as the `chain_id` to specify any
 }
 ```
 
-This is useful for local testnets or newer chains which might not have an alias yet.
+This is useful for in environments where the aliases may not be available or in chains which may not have an alias.
 
 ## Backwards Compatibility
 
-N/A
+- Revision 2 of the ESR signing protocol introduces breaking changes from Revision 1.
 
 ## Use Cases
 
@@ -348,39 +382,58 @@ The following are a few examples of how these payloads could be transmitted.
 The EOSIO Signing Request in a custom URI scheme format uses the `scheme` and `path` components defined within [RFC 3986](https://www.ietf.org/rfc/rfc3986.txt).
 
 ```
-eosio:<signing_request>
-\___/ \_______________/
-  |         |
-  scheme    path
+esr:<signing_request>
+\_/ \_______________/
+ |         |
+ scheme    path
 ```
 
-The `scheme` that defines the URI format is `eosio`. Any client application capable of handling EOSIO transactions can register itself as the default system handler for this scheme.
+The `scheme` that defines the URI format is `esr`. Any client application capable of handling EOSIO transactions can register itself as the default system handler for this scheme.
 
 The `path` portion of the URI is a represents a "[Signing Request](#signing-request)". The data that makes up each request is serialized using the same binary format as the EOSIO blockchain. Each request is also encoded using a url-safe Base64 variant ([appx: Base64u](#base64u)) and optionally compressed using zlib deflate ([appx: Compression](#compression)).
 
 ###### Format Example
 
-The following URI is an example of a `vote` action on the `eosio.forum` contract. Within the transaction data, it specifies the `rex4all` proposal with a vote of `1` (Approve).
+The following is an example of a `voteproducer` action on the `eosio` contract within the `path` of the URI.
 
 ```
-eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA
-\___/ \__________________________________________________/
-  |         |
-  scheme    path
+esr:gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA
+\_/ \__________________________________________________/
+ |         |
+ scheme    path
 ```
 
-Once decoded/inflated ([decode URI payload](https://greymass.github.io/eosio-uri-builder/gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA)) it will return the following signing request:
+Once decoded/inflated ([decode URI payload](https://greymass.github.io/eosio-uri-builder/gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA)) it will return the following signing request:
 
 ```
-{ req:
-   [ 'action[]',
-     [ { account: 'eosio.forum',
-         name: 'vote',
-         authorization: [ { actor: '............1', permission: '............1' } ],
-         data: '0100000000000000000000204643BABA0100' } ] ],
-  broadcast: true,
-  callback: { url: '', background: false },
-  chain_id: [ 'uint8', 1 ] }
+{
+  version: 2,
+  data: {
+    chain_id: [ 'chain_alias', 1 ],
+    req: [
+      'action[]',
+      [
+        {
+          account: 'eosio',
+          name: 'voteproducer',
+          authorization: [ { actor: '............1', permission: '............2' } ],
+          data: '0100000000000000A032DD181BE9D56500'
+        }
+      ]
+    ],
+    flags: 1,
+    callback: '',
+    info: []
+  },
+  textEncoder: TextEncoder { encoding: 'utf-8' },
+  textDecoder: TextDecoder { encoding: 'utf-8', fatal: false, ignoreBOM: false },
+  zlib: {
+    deflateRaw: [Function: deflateRaw],
+    inflateRaw: [Function: inflateRaw]
+  },
+  abiProvider: { getAbi: [AsyncFunction: getAbi] },
+  signature: undefined
+}
 ```
 
 ### URI Usage
@@ -388,7 +441,7 @@ Once decoded/inflated ([decode URI payload](https://greymass.github.io/eosio-uri
 Many URI schemes are commonly used within hyperlinks (anchor tags) in HTML and QR codes to allow a camera-based transfer of information in mobile devices. Taking the transaction from the above example of a referendum vote action, with a URI of:
 
 ```
-eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA
+esr:gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA
 ```
 
 The transaction can be triggered with the following examples:
@@ -398,7 +451,7 @@ The transaction can be triggered with the following examples:
 Example:
 
 ```
-<a href="eosio:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA">
+<a href="esr:gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA">
   Clickable Hyperlink
 </a>
 ```
@@ -410,25 +463,23 @@ If a user were to click the above link with a EOSIO URI compatible application i
 
 As well as being portable enough for usage within a URI/URL format, the same payload data can also be represented as a QR Code to be consumed by any device with QR scanning capabilities.
 
-![qrcode:gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA](../assets/eep-7/qrcode.svg)
+![qrcode:gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA](../assets/eep-7/qrcode.png)
 
-Scanning the above QR code on a device with camera capabilities could trigger the payload within the end user specified signature provider.
+Scanning the above QR code on a device with QR Code capabilities could trigger the payload within the end user specified signature provider.
 
 ## Test Cases
 
-**Note**: These examples all use [eosjs v20.0.0-beta3](https://github.com/EOSIO/eosjs/tree/v20.0.0-beta3) for its `Serialize` component.
+**Note**: These examples all use [eosjs v20.0.0](https://github.com/EOSIO/eosjs/tree/v20.0.0) for its `Serialize` component.
 
 #### Example - Transaction to encoded PATH
 
-This example will take a signing request and convert it into a `path` string.
-
-[![Edit 61vw7l514n](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/61vw7l514n?fontsize=14)
+This example will take an EOSIO Signing Request and convert it into a compressed string.
 
 ```js
 /*
   EOSIO URI Specification
 
-  Example: Decoding and inflating a `PATH` string
+  Example: Encoding an EOSIO Signing Request into a compressed payload
 */
 
 const { Serialize } = require('eosjs');
@@ -441,7 +492,10 @@ const textDecoder = new util.TextDecoder();
 // The signing request to be encoded
 const signingRequest = {
   // "chain_id": [ "uint8", 1 ],
-  "chain_id": [ "checksum256", "aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906"],
+  "callback": "https://domain.com",
+  "chain_id": [ "chain_id", "aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906"],
+  "flags": 1,
+  "info": [],
   "req": [
     "action[]",
     [
@@ -451,22 +505,17 @@ const signingRequest = {
         "authorization": [
           {
             "actor": "............1",
-            "permission": "............1"
+            "permission": "............2"
           }
         ],
         "data": "0100000000000000000000204643BABA0100"
       }
     ]
   ],
-  "broadcast": true,
-  "callback": {
-    "url": "",
-    "background": false
-  }
 }
 
 // The minified ABI struct used to deserialize the request
-const abi = {version:"eosio::abi/1.1",types:[{new_type_name:"account_name",type:"name"},{new_type_name:"action_name",type:"name"},{new_type_name:"permission_name",type:"name"}],structs:[{name:"permission_level",fields:[{name:"actor",type:"account_name"},{name:"permission",type:"permission_name"}]},{name:"action",fields:[{name:"account",type:"account_name"},{name:"name",type:"action_name"},{name:"authorization",type:"permission_level[]"},{name:"data",type:"bytes"}]},{name:"extension",fields:[{name:"type",type:"uint16"},{name:"data",type:"bytes"}]},{name:"transaction_header",fields:[{name:"expiration",type:"time_point_sec"},{name:"ref_block_num",type:"uint16"},{name:"ref_block_prefix",type:"uint32"},{name:"max_net_usage_words",type:"varuint32"},{name:"max_cpu_usage_ms",type:"uint8"},{name:"delay_sec",type:"varuint32"}]},{name:"transaction",base:"transaction_header",fields:[{name:"context_free_actions",type:"action[]"},{name:"actions",type:"action[]"},{name:"transaction_extensions",type:"extension[]"}]},{name:"callback",fields:[{name:"url",type:"string"},{name:"background",type:"bool"}]},{name:"signing_request",fields:[{name:"chain_id",type:"variant_id"},{name:"req",type:"variant_req"},{name:"broadcast",type:"bool"},{name:"callback",type:"callback?"}]}],variants:[{name:"variant_id",types:["uint8","checksum256"]},{name:"variant_req",types:["action","action[]","transaction"]}]};
+const abi = {version:"eosio::abi/1.1",types:[{new_type_name:"account_name",type:"name"},{new_type_name:"action_name",type:"name"},{new_type_name:"permission_name",type:"name"},{new_type_name:"chain_alias",type:"uint8"},{new_type_name:"chain_id",type:"checksum256"},{new_type_name:"request_flags",type:"uint8"}],structs:[{name:"permission_level",fields:[{name:"actor",type:"account_name"},{name:"permission",type:"permission_name"}]},{name:"action",fields:[{name:"account",type:"account_name"},{name:"name",type:"action_name"},{name:"authorization",type:"permission_level[]"},{name:"data",type:"bytes"}]},{name:"extension",fields:[{name:"type",type:"uint16"},{name:"data",type:"bytes"}]},{name:"transaction_header",fields:[{name:"expiration",type:"time_point_sec"},{name:"ref_block_num",type:"uint16"},{name:"ref_block_prefix",type:"uint32"},{name:"max_net_usage_words",type:"varuint32"},{name:"max_cpu_usage_ms",type:"uint8"},{name:"delay_sec",type:"varuint32"}]},{name:"transaction",base:"transaction_header",fields:[{name:"context_free_actions",type:"action[]"},{name:"actions",type:"action[]"},{name:"transaction_extensions",type:"extension[]"}]},{name:"info_pair",fields:[{name:"key",type:"string"},{name:"value",type:"bytes"}]},{name:"signing_request",fields:[{name:"chain_id",type:"variant_id"},{name:"req",type:"variant_req"},{name:"flags",type:"request_flags"},{name:"callback",type:"string"},{name:"info",type:"info_pair[]"}]},{name:"identity",fields:[{name:"permission",type:"permission_level?"}]},{name:"request_signature",fields:[{name:"signer",type:"name"},{name:"signature",type:"signature"}]}],variants:[{name:"variant_id",types:["chain_alias","chain_id"]},{name:"variant_req",types:["action","action[]","transaction","identity"]}],actions:[{name:"identity",type:"identity"}]};;
 
 /**
 * ------------------------------------------------
@@ -539,7 +588,7 @@ const requestTypes = Serialize.getTypesFromAbi(Serialize.createInitialTypes(), a
 const requestAbi = requestTypes.get('signing_request');
 requestAbi.serialize(buffer, signingRequest);
 
-let header = 1;
+let header = 2;
 header |= 1 << 7;
 
 const array = new Uint8Array(zlib.deflateRawSync(Buffer.from(buffer.asUint8Array())));
@@ -555,22 +604,20 @@ console.log(encoded);
 
 /* Output:
 
-gWNgZGRkWLKvhPGVQSgDCCwwugsUgQAYLQRjAIGCm_OuXYwMIDUA
+gmNcs7jsE9uOP6rL3rrcvpMWUmN27LCdleD836_eTzFz-vCSjZGRYcm-EsZXBqEMILDA6C5QBAKYoLQQTAAIFNycd-1iZGAUyigpKSi20tdPyc9NzMzTS87PZQAA
 
 */
 ````
 
 #### Example - Encoded PATH to Transaction
 
-This example will take a `path` string and convert it into a signing request.
-
-[![Edit 8453xlqnn9](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/8453xlqnn9?fontsize=14)
+This example will take a compressed payload string and convert it into an EOSIO Signing Request structure.
 
 ```js
 /*
   EOSIO URI Specification
 
-  Example: Decoding and inflating a `PATH` string
+  Example: Decoding and inflating a encoded payload string
 */
 
 const { Serialize } = require('eosjs');
@@ -581,10 +628,10 @@ const textEncoder = new util.TextEncoder();
 const textDecoder = new util.TextDecoder();
 
 // The URI path to be decoded
-const uriPath = 'gWNcs7jsE9uOP6rL3rrcvpMWUmN27LCdleD836_eTzFz-vCSjZGRYcm-EsZXBqEMILDA6C5QBAJgtBCMAQQKbs67djEygNQAAA';
+const uriPath = 'gmNcs7jsE9uOP6rL3rrcvpMWUmN27LCdleD836_eTzFz-vCSjZGRYcm-EsZXBqEMILDA6C5QBAKYoLQQTAAIFNycd-1iZGAUyigpKSi20tdPyc9NzMzTS87PZQAA';
 
 // The minified ABI struct used to deserialize the request
-const abi = {version:"eosio::abi/1.1",types:[{new_type_name:"account_name",type:"name"},{new_type_name:"action_name",type:"name"},{new_type_name:"permission_name",type:"name"}],structs:[{name:"permission_level",fields:[{name:"actor",type:"account_name"},{name:"permission",type:"permission_name"}]},{name:"action",fields:[{name:"account",type:"account_name"},{name:"name",type:"action_name"},{name:"authorization",type:"permission_level[]"},{name:"data",type:"bytes"}]},{name:"extension",fields:[{name:"type",type:"uint16"},{name:"data",type:"bytes"}]},{name:"transaction_header",fields:[{name:"expiration",type:"time_point_sec"},{name:"ref_block_num",type:"uint16"},{name:"ref_block_prefix",type:"uint32"},{name:"max_net_usage_words",type:"varuint32"},{name:"max_cpu_usage_ms",type:"uint8"},{name:"delay_sec",type:"varuint32"}]},{name:"transaction",base:"transaction_header",fields:[{name:"context_free_actions",type:"action[]"},{name:"actions",type:"action[]"},{name:"transaction_extensions",type:"extension[]"}]},{name:"callback",fields:[{name:"url",type:"string"},{name:"background",type:"bool"}]},{name:"signing_request",fields:[{name:"chain_id",type:"variant_id"},{name:"req",type:"variant_req"},{name:"broadcast",type:"bool"},{name:"callback",type:"callback?"}]}],variants:[{name:"variant_id",types:["uint8","checksum256"]},{name:"variant_req",types:["action","action[]","transaction"]}]};
+const abi = {version:"eosio::abi/1.1",types:[{new_type_name:"account_name",type:"name"},{new_type_name:"action_name",type:"name"},{new_type_name:"permission_name",type:"name"},{new_type_name:"chain_alias",type:"uint8"},{new_type_name:"chain_id",type:"checksum256"},{new_type_name:"request_flags",type:"uint8"}],structs:[{name:"permission_level",fields:[{name:"actor",type:"account_name"},{name:"permission",type:"permission_name"}]},{name:"action",fields:[{name:"account",type:"account_name"},{name:"name",type:"action_name"},{name:"authorization",type:"permission_level[]"},{name:"data",type:"bytes"}]},{name:"extension",fields:[{name:"type",type:"uint16"},{name:"data",type:"bytes"}]},{name:"transaction_header",fields:[{name:"expiration",type:"time_point_sec"},{name:"ref_block_num",type:"uint16"},{name:"ref_block_prefix",type:"uint32"},{name:"max_net_usage_words",type:"varuint32"},{name:"max_cpu_usage_ms",type:"uint8"},{name:"delay_sec",type:"varuint32"}]},{name:"transaction",base:"transaction_header",fields:[{name:"context_free_actions",type:"action[]"},{name:"actions",type:"action[]"},{name:"transaction_extensions",type:"extension[]"}]},{name:"info_pair",fields:[{name:"key",type:"string"},{name:"value",type:"bytes"}]},{name:"signing_request",fields:[{name:"chain_id",type:"variant_id"},{name:"req",type:"variant_req"},{name:"flags",type:"request_flags"},{name:"callback",type:"string"},{name:"info",type:"info_pair[]"}]},{name:"identity",fields:[{name:"permission",type:"permission_level?"}]},{name:"request_signature",fields:[{name:"signer",type:"name"},{name:"signature",type:"signature"}]}],variants:[{name:"variant_id",types:["chain_alias","chain_id"]},{name:"variant_req",types:["action","action[]","transaction","identity"]}],actions:[{name:"identity",type:"identity"}]};;
 
 /**
 * Base64u - URL-Safe Base64 variant no padding.
@@ -625,7 +672,7 @@ const data = decode(uriPath);
 // Retrieve header byte and check protocol version
 const header = data[0];
 const version = header & ~(1 << 7);
-if (version !== 1) {
+if (version !== 2) {
   throw new Error('Invalid protocol version');
 }
 
@@ -650,32 +697,43 @@ console.log(util.inspect(signingRequest, { showHidden: false, depth: null }));
 
 /* Output:
 
-{ chain_id: [ 'uint8', 1 ],
-  req:
-   [ 'action[]',
-     [ { account: 'eosio.forum',
-         name: 'vote',
-         authorization: [ { actor: '............1', permission: '............1' } ],
-         data: '0100000000000000000000204643BABA0100' } ] ],
-  broadcast: true,
-  callback: { url: '', background: false } }
+{
+  chain_id: [
+    'chain_id',
+    'ACA376F206B8FC25A6ED44DBDC66547C36C6C33E3A119FFBEAEF943642F0E906'
+  ],
+  req: [
+    'action[]',
+    [
+      {
+        account: 'eosio.forum',
+        name: 'vote',
+        authorization: [ { actor: '............1', permission: '............2' } ],
+        data: '0100000000000000000000204643BABA0100'
+      }
+    ]
+  ],
+  flags: 1,
+  callback: 'https://domain.com',
+  info: []
+}
 
 */
 ````
 
 ## Implementations
 
-Existing implementation of the EOSIO URI Scheme (v1) include:
+Existing implementation of the EOSIO URI Scheme (REV 2) include:
 
 ##### JS Libraries
- - [greymass/eosio-uri](https://github.com/greymass/eosio-uri) ([npm](https://www.npmjs.com/package/eosio-uri)): EOSIO URI encoder/decoder library
+ - [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request) ([npm](https://www.npmjs.com/package/eosio-signing-request)): A JavaScript library to facilitate the creation and consumption of EOSIO Signing Requests.
 
 ##### Signature Providers
-- [Anchor](https://github.com/greymass/eos-voter): Signature Provider (formerly "eos-voter", or "Greymass Wallet")
+- [Anchor](https://github.com/greymass/eos-voter): ESR compatible wallet/signature provider (formerly "eos-voter", or "Greymass Wallet").
 
 ##### User Interfaces
-- [EOSIO.to](https://eosio.to) (([src](https://github.com/greymass/eosio.to)): Provides Signing Request verification and triggering via HTTP links.
-- [EOSIO URI Builder](https://greymass.github.io/eosio-uri-builder/) ([src](https://github.com/greymass/eosio-uri-builder)): User Interface to encode/decode EOSIO URIs
+- [EOSIO.to](https://eosio.to) (([src](https://github.com/greymass/eosio.to)): Provides Signing Request verification and signature provider hooks.
+- [EOSIO URI Builder](https://greymass.github.io/eosio-uri-builder/) ([src](https://github.com/greymass/eosio-uri-builder)): User Interface to encode/decode EOSIO Signing Requests.
 
 ## Appendix
 
@@ -739,29 +797,28 @@ The following example shows the same signing request, compressed vs uncompressed
 ```
 original:
 
-eosio:AQABAACmgjQD6jBVAAAAVy08zc0BAQAAAAAAAAABAAAAAAAAADEBAAAAAAAAAAAAAAAAAChdoGgGAAAAAAAERU9TAAAAABBzaGFyZSBhbmQgZW5qb3khAQA
+esr:AQABAACmgjQD6jBVAAAAVy08zc0BAQAAAAAAAAABAAAAAAAAADEBAAAAAAAAAAAAAAAAAChdoGgGAAAAAAAERU9TAAAAABBzaGFyZSBhbmQgZW5qb3khAQA
 
 zlib deflated:
 
-eosio:gWNgZGBY1mTC_MoglIGBIVzX5uxZRqAQGMBoQxgDAjRiF2SwgVksrv7BIFqgOCOxKFUhMS9FITUvK79SkZEBAA
+esr:gWNgZGBY1mTC_MoglIGBIVzX5uxZRqAQGMBoQxgDAjRiF2SwgVksrv7BIFqgOCOxKFUhMS9FITUvK79SkZEBAA
 ```
 
 ##### Signing Request - Placeholders
 
-Within the payload of a signing request, placeholders may be set in both `authorization` and `data` (sub)fields. v1 of the URI Specification defines the only available placeholder as `............1`. This placeholder should be resolved within EOSIO Clients based on the data provided by the signer when resolving a transaction.
+Within the payload of a signing request, placeholders may be set in both `authorization` and `data` (sub)fields. REV 2 of the URI Specification defines two placeholders:
 
-When `............1` is found within...
+- `............1` represents the account name used to sign the transaction.
+- `............2` represents the account permission used to sign the transaction.
 
-- a `permission[].actor` field, it should resolve to the current signing accounts name.
-- a `permission[].level` field, it should resolve to the current signing accounts authority level.
-- any property within `data` having a type of `name`, it should resolve to the current signing accounts name.
+These placeholders should be resolved within EOSIO Clients based on the data provided by the signer when resolving a transaction.
 
 Given the following signing request example:
 
 ```js
 { account: "eosio.token",
   name: "transfer",
-  authorization: [{actor: "............1", permission: "............1"}],
+  authorization: [{actor: "............1", permission: "............2"}],
   data: {
     from: "............1",
     to: "bar",
@@ -819,165 +876,212 @@ struct signing_request {
 
 ```json
 {
-  "version": "eosio::abi/1.1",
-  "types": [
-    {
-      "new_type_name": "account_name",
-      "type": "name"
-    },
-    {
-      "new_type_name": "action_name",
-      "type": "name"
-    },
-    {
-      "new_type_name": "permission_name",
-      "type": "name"
-    },
-    {
-      "new_type_name": "chain_alias",
-      "type": "uint8"
-    },
-    {
-      "new_type_name": "chain_id",
-      "type": "checksum256"
-    }
-  ],
-  "structs": [
-    {
-      "name": "permission_level",
-      "fields": [
+    version: 'eosio::abi/1.1',
+    types: [
         {
-          "name": "actor",
-          "type": "account_name"
+            new_type_name: 'account_name',
+            type: 'name',
         },
         {
-          "name": "permission",
-          "type": "permission_name"
-        }
-      ]
-    },
-    {
-      "name": "action",
-      "fields": [
-        {
-          "name": "account",
-          "type": "account_name"
+            new_type_name: 'action_name',
+            type: 'name',
         },
         {
-          "name": "name",
-          "type": "action_name"
+            new_type_name: 'permission_name',
+            type: 'name',
         },
         {
-          "name": "authorization",
-          "type": "permission_level[]"
+            new_type_name: 'chain_alias',
+            type: 'uint8',
         },
         {
-          "name": "data",
-          "type": "bytes"
-        }
-      ]
-    },
-    {
-      "name": "extension",
-      "fields": [{
-          "name": "type",
-          "type": "uint16"
-        }, {
-          "name": "data",
-          "type": "bytes"
-        }]
-    },
-    {
-      "name": "transaction_header",
-      "fields": [
-        {
-          "name": "expiration",
-          "type": "time_point_sec"
+            new_type_name: 'chain_id',
+            type: 'checksum256',
         },
         {
-          "name": "ref_block_num",
-          "type": "uint16"
+            new_type_name: 'request_flags',
+            type: 'uint8',
+        },
+    ],
+    structs: [
+        {
+            name: 'permission_level',
+            fields: [
+                {
+                    name: 'actor',
+                    type: 'account_name',
+                },
+                {
+                    name: 'permission',
+                    type: 'permission_name',
+                },
+            ],
         },
         {
-          "name": "ref_block_prefix",
-          "type": "uint32"
+            name: 'action',
+            fields: [
+                {
+                    name: 'account',
+                    type: 'account_name',
+                },
+                {
+                    name: 'name',
+                    type: 'action_name',
+                },
+                {
+                    name: 'authorization',
+                    type: 'permission_level[]',
+                },
+                {
+                    name: 'data',
+                    type: 'bytes',
+                },
+            ],
         },
         {
-          "name": "max_net_usage_words",
-          "type": "varuint32"
+            name: 'extension',
+            fields: [
+                {
+                    name: 'type',
+                    type: 'uint16',
+                },
+                {
+                    name: 'data',
+                    type: 'bytes',
+                },
+            ],
         },
         {
-          "name": "max_cpu_usage_ms",
-          "type": "uint8"
+            name: 'transaction_header',
+            fields: [
+                {
+                    name: 'expiration',
+                    type: 'time_point_sec',
+                },
+                {
+                    name: 'ref_block_num',
+                    type: 'uint16',
+                },
+                {
+                    name: 'ref_block_prefix',
+                    type: 'uint32',
+                },
+                {
+                    name: 'max_net_usage_words',
+                    type: 'varuint32',
+                },
+                {
+                    name: 'max_cpu_usage_ms',
+                    type: 'uint8',
+                },
+                {
+                    name: 'delay_sec',
+                    type: 'varuint32',
+                },
+            ],
         },
         {
-          "name": "delay_sec",
-          "type": "varuint32"
-        }
-      ]
-    },
-    {
-      "name": "transaction",
-      "base": "transaction_header",
-      "fields": [
-        {
-          "name": "context_free_actions",
-          "type": "action[]"
+            name: 'transaction',
+            base: 'transaction_header',
+            fields: [
+                {
+                    name: 'context_free_actions',
+                    type: 'action[]',
+                },
+                {
+                    name: 'actions',
+                    type: 'action[]',
+                },
+                {
+                    name: 'transaction_extensions',
+                    type: 'extension[]',
+                },
+            ],
         },
         {
-          "name": "actions",
-          "type": "action[]"
+            name: 'info_pair',
+            fields: [
+                {
+                    name: 'key',
+                    type: 'string',
+                },
+                {
+                    name: 'value',
+                    type: 'bytes',
+                },
+            ],
         },
         {
-          "name": "transaction_extensions",
-          "type": "extension[]"
-        }
-      ]
-    },
-    {
-      "name": "callback",
-      "fields": [{
-          "name": "url",
-          "type": "string"
-        }, {
-          "name": "background",
-          "type": "bool"
-        }]
-    },
-    {
-      "name": "signing_request",
-      "fields": [
-        {
-          "name": "chain_id",
-          "type": "variant_id"
+            name: 'signing_request',
+            fields: [
+                {
+                    name: 'chain_id',
+                    type: 'variant_id',
+                },
+                {
+                    name: 'req',
+                    type: 'variant_req',
+                },
+                {
+                    name: 'flags',
+                    type: 'request_flags',
+                },
+                {
+                    name: 'callback',
+                    type: 'string',
+                },
+                {
+                    name: 'info',
+                    type: 'info_pair[]',
+                },
+            ],
         },
         {
-          "name": "req",
-          "type": "variant_req"
+            name: 'identity',
+            fields: [
+                {
+                    name: 'permission',
+                    type: 'permission_level?',
+                },
+            ],
         },
         {
-          "name": "broadcast",
-          "type": "bool"
+            name: 'request_signature',
+            fields: [
+                {
+                    name: 'signer',
+                    type: 'name',
+                },
+                {
+                    name: 'signature',
+                    type: 'signature',
+                },
+            ],
+        },
+    ],
+    variants: [
+        {
+            name: 'variant_id',
+            types: ['chain_alias', 'chain_id'],
         },
         {
-          "name": "callback",
-          "type": "callback?"
-        }
-      ]
-    }
-  ],
-  "variants": [
-    {
-      "name": "variant_id",
-      "types": ["chain_alias", "chain_id"]
-    },
-    {
-      "name": "variant_req",
-      "types": ["action", "action[]", "transaction"]
-    }
-  ]
+            name: 'variant_req',
+            types: ['action', 'action[]', 'transaction', 'identity'],
+        },
+    ],
+    actions: [
+        {
+            name: 'identity',
+            type: 'identity',
+        },
+    ],
 }
 ```
+
+## Change Log
+
+- 2020/01/16: Updated to Revision 2.
+- 2019/10/28: Added change log, MIME type recommendation
 
 ## Acknowledgements
 
