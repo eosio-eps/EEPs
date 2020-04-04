@@ -1,6 +1,6 @@
 ---
-EEP: ...
-title: EOSIO Signing Requests
+EEP: 7
+title: ESR (EOSIO Signing Request)
 author: Aaron Cox (@aaroncox), Johan Nordberg (@jnordberg)
 revision: 2
 status: Draft
@@ -37,7 +37,7 @@ updated: 2020-01-16
 
 ## Summary
 
-A standard for an EOSIO-based signing request payload to allow communication between applications and signature providers.
+A standard protocol for an EOSIO-based signing request payload to allow communication between applications and signature providers.
 
 ## Abstract
 
@@ -51,7 +51,7 @@ While other protocols already exist within EOSIO for more intricate cross-applic
 
 ## Specification
 
-The following specification sets out to define the technical standards used and the actual composition of an EOSIO Signing Request. While this written specification centers around JavaScript/JSON, the concepts are be compatible within any modern programming environment.
+The following specification sets out to define the technical standards used and the actual composition of an EOSIO Signing Request payload. While this written specification uses examples in JavaScript/JSON, the concepts are be compatible within any modern programming environment.
 
 **Table of Contents - Specification**
 - [EOSIO Client Implementation Guidelines](#eosio-client-implementation-guidelines)
@@ -84,42 +84,40 @@ In its encapsulated form, and EOSIO Signing Request is a data structure which ha
 gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA
 ```
 
-The above payload is a signing request for a transaction to perform the `voteproducer` action on the `eosio` contract. The data contained within the action itself also specifies the proxy of `greymassvote`.
+The above payload is a signing request for a transaction on EOS to perform the `voteproducer` action on the `eosio` contract. The data contained within the action itself also specifies the proxy of `greymassvote`.
 
-Once decoded/inflated ([preview decoded payload](https://greymass.github.io/eosio-uri-builder/gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA)) it will return the following SigningRequest:
+Once decoded/inflated ([preview request](https://eosio.to/gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA)) it will return the following data:
 
 ```
 {
-  version: 2,
-  data: {
-    chain_id: [ 'chain_alias', 1 ],
-    req: [
-      'action[]',
-      [
-        {
-          account: 'eosio',
-          name: 'voteproducer',
-          authorization: [ { actor: '............1', permission: '............2' } ],
-          data: '0100000000000000A032DD181BE9D56500'
+  "callback": "",
+  "chain_id": [ "chain_alias", 1 ],
+  "flags": 1,
+  "info": [],
+  "req": [
+    [
+      "action[]",
+      {
+        "account": "eosio",
+        "name": "voteproducer",
+        "authorization": [
+          {
+            "actor": "............1",
+            "permission": "............2"
+          }
+        ],
+        "data": {
+          "voter": "............1",
+          "proxy": "greymassvote",
+          "producers": []
         }
-      ]
-    ],
-    flags: 1,
-    callback: '',
-    info: []
-  },
-  textEncoder: TextEncoder { encoding: 'utf-8' },
-  textDecoder: TextDecoder { encoding: 'utf-8', fatal: false, ignoreBOM: false },
-  zlib: {
-    deflateRaw: [Function: deflateRaw],
-    inflateRaw: [Function: inflateRaw]
-  },
-  abiProvider: { getAbi: [AsyncFunction: getAbi] },
-  signature: undefined
+      }
+    ]
+  ]
 }
 ```
 
-This SigningRequest can then be used to prompt action from an end user in their preferred signature provider. The signature provider can then resolve the transaction and complete any required templating, sign the transaction, and optionally trigger a callback and/or broadcast the signed transaction to the blockchain.
+This decoded data can then be used to prompt action from an end user in their preferred signature provider. The signature provider can then resolve the transaction and complete any required templating, sign the transaction, and optionally trigger a callback and/or broadcast the completed transaction to the blockchain.
 
 ### Data Format
 
@@ -142,29 +140,23 @@ The header consists of the first 8 bits, with the first 7 bits representing the 
 
 #### Payload
 
-All data beyond the first 8 bits forms the representation of the SigningRequest. This structure is as follows:
+All data beyond the first 8 bits forms the representation of the Signing Request payload. This structure is as follows:
 
   param            | description
  ------------------|-------------
-  `abiProvider`    | A method to provide raw ABI data (when needed)
-  `data`           | The signing request data (see below)
-  `data.callback`  | A templatable URL a POST request should be triggered to after the transaction is broadcast/signed
-  `data.chain_id`  | 32-byte id of target chain or 1-byte alias ([Chain Aliases](#chain-aliases))
-  `data.flags`     | Various flags for how to process this transaction
-  `data.info`      | Optional metadata to pass along with the request
-  `data.req`       | The action, list of actions, or full transaction that should be signed
-  `signature`      | An array containing existing signatures if any were provided
-  `textEncoder`    | The text encoder used for processing
-  `textDecoder`    | The text decoder used for processing
-  `version`        | The protocol version of this signing request
+  `callback`  | A templatable URL a POST request should be triggered to after the transaction is broadcast/signed
+  `chain_id`  | 32-byte id of target chain or 1-byte alias ([Chain Aliases](#chain-aliases))
+  `flags`     | Various flags for how to process this transaction
+  `info`      | Optional metadata to pass along with the request
+  `req`       | The transaction(s) being requested
 
 Many of these fields are further outlined below. An extended schema of this payload can be found in the Appendix as both an [EOSIO C++ struct](#signing-request-represented-as-a-eosio-c-struct) and an [ABI of ESR](#signing-request-represented-as-an-eosio-abi).
 
 ---
 
-##### `data.req`
+##### `req`
 
-The actual EOSIO transaction(s) involved in a signing request exist within the `data.req` parameter. This data consists of an array where the first value is the `type` of request and the second value is the `data`.
+The actual EOSIO transaction(s) involved in a signing request exist within the `req` parameter. This data consists of an array where the first value is the `type` of request and the second value is the `data`.
 
 The `type` of data can be one of the following:
 
@@ -175,9 +167,9 @@ The `type` of data can be one of the following:
 
 Example data structures of each are listed below.
 
-###### `type: 'action'` (a single contract action)
+###### `req`, `type: 'action'`
 
-The most basic form of a signing request is to pass a single contract action and the data to include when creating a signature. In simple terms this data can be illustrated as:
+The most basic form of a signing request is to pass a single action and the data to include when creating a signature. In simple terms this data can be illustrated as:
 
 ```
 [
@@ -186,7 +178,7 @@ The most basic form of a signing request is to pass a single contract action and
 ]
 ```
 
-The first value (type) being `action` indicates that the second value is an object containing a singular action that needs to be both templated and included in a transaction using current TAPoS values.
+The first value of the array, the type `action`, indicates that the second value is an object containing a singular action that needs to be both templated and included in a transaction using current TAPoS values.
 
 Example:
 
@@ -204,7 +196,7 @@ Example:
 }
 ```
 
-###### `type: 'action[]'` (multiple actions)
+###### `req`, `type: 'action[]'`
 
 The second option is to pass an array of actions, which can all be bundled together into a single transaction. The simple syntax using this method is as follows:
 
@@ -212,14 +204,13 @@ The second option is to pass an array of actions, which can all be bundled toget
 [
   'action[]',
   [
-    <action1>,
-    <action2>,
-    ...
+    { ... action1 },
+    { ... action2 },
   ]
 ]
 ```
 
-The first value (type) being `action[]` indicates that the second value is an array of multiple actions that needs to be both templated and included in a transaction using current TAPoS values.
+The first value being `action[]` indicates that the second value is an array of multiple actions that needs to be both templated and included in a transaction using current TAPoS values.
 
 Example:
 
@@ -245,11 +236,15 @@ Example:
 }
 ```
 
-###### `type: 'transaction'` (full transaction)
+###### `req`, `type: 'identity'`
 
-The most complex option is to pass a nearly complete transaction (including TAPoS values) directly to the EOSIO client, which will only require minor templating and the addition of a signature. This option is primarily to allow for flexibility, but most use cases should likely use the `action` or `action[]` method to avoid having to deal with the complication of building full transactions.
+TODO: Section needs to be written
 
-**Note**: By going this route, the EOSIO client will either have to respect the `expiration` and TAPoS values or alter them. By using the `transaction` method, URIs may have a limited shelf life which can make statically sharing URIs more difficult.
+###### `req`, `type: 'transaction'`
+
+The most complex option is to pass a complete transaction (including TAPoS values) directly to the signature provider, which will only require minor templating and the addition of a signature. This option is primarily to allow for flexibility, but most use cases should likely use the `action` or `action[]` method to avoid having to deal with the complication of building full transactions.
+
+**Note**: By going this route, the signature provider will either have to respect the `expiration` and TAPoS values or alter them. By using the `transaction` method, URIs may have a limited shelf life which can make statically sharing URIs more difficult.
 
 ```
 [
@@ -301,7 +296,9 @@ Example:
 
 ---
 
-##### `data.broadcast`
+##### `broadcast`
+
+TODO: Is this still part of the specification? Should this be removed?
 
 Each signing request has a boolean field for whether or not the signed transaction should be broadcast to the associated blockchain after a signature has been created.
 
@@ -311,7 +308,9 @@ Setting the `broadcast` field to `false` and specifying a `callback` will allow 
 
 ---
 
-##### `data.callback`
+##### `callback`
+
+TODO: This needs to be changed to include the object version of the callback field, if that's still possible.
 
 An optional parameter of the signing request is the `callback`, which when set indicates how an EOSIO client should proceed after the transaction has completed. The `callback` itself is a string containing a full URL. This URL will be triggered after the transaction has been either signed or broadcast based on the `flags` provided.
 
@@ -339,29 +338,29 @@ Available Parameters:
 
 ##### `chain_id`
 
-The `chain_id` parameter accepts two different formats, a [Chain Alias](#chain_alias) or a [Chain ID](#chain_id).
+This value indicates which EOSIO chain the transaction is intended for. The `chain_id` parameter accepts two different formats, a [Chain Alias](#chain_alias) or a [Chain ID](#chain_id).
 
-###### Chain Alias
+###### `chain_id`, Chain Aliases
 
 In an effort to maintain a lower payload size, a predefined list of aliases for specific `chain_id` values has been defined and can be specified using an array with `uint8` followed by the ID of the chain the request should use. The following is an example of how to use the `chain_id` with a value of `1`:
 
 ```
 {
   chain_id: [ 'uint8', 1 ],
-  ... signing_request
+  ... remaining payload
 }
 ```
 
 A full list of available [Chain Aliases](#chain-aliases) can be found in the Appendix of this document.
 
-###### Chain ID
+###### `chain_id`, Chain ID
 
 Alternatively, a 32-byte ID value can be passed as the `chain_id` to specify any specific chain.
 
 ```
 {
   chain_id: [ 'checksum256', 'aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906' ],
-  ... signing_request
+  ... remaining payload
 }
 ```
 
@@ -403,36 +402,34 @@ esr:gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA
  scheme    path
 ```
 
-Once decoded/inflated ([decode URI payload](https://greymass.github.io/eosio-uri-builder/gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA)) it will return the following signing request:
+Once decoded/inflated ([preview request](https://eosio.to/gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA)) it will return the following signing request:
 
 ```
 {
-  version: 2,
-  data: {
-    chain_id: [ 'chain_alias', 1 ],
-    req: [
-      'action[]',
-      [
-        {
-          account: 'eosio',
-          name: 'voteproducer',
-          authorization: [ { actor: '............1', permission: '............2' } ],
-          data: '0100000000000000A032DD181BE9D56500'
+  "callback": "",
+  "chain_id": [ "chain_alias", 1 ],
+  "flags": 1,
+  "info": [],
+  "req": [
+    [
+      "action[]",
+      {
+        "account": "eosio",
+        "name": "voteproducer",
+        "authorization": [
+          {
+            "actor": "............1",
+            "permission": "............2"
+          }
+        ],
+        "data": {
+          "voter": "............1",
+          "proxy": "greymassvote",
+          "producers": []
         }
-      ]
-    ],
-    flags: 1,
-    callback: '',
-    info: []
-  },
-  textEncoder: TextEncoder { encoding: 'utf-8' },
-  textDecoder: TextDecoder { encoding: 'utf-8', fatal: false, ignoreBOM: false },
-  zlib: {
-    deflateRaw: [Function: deflateRaw],
-    inflateRaw: [Function: inflateRaw]
-  },
-  abiProvider: { getAbi: [AsyncFunction: getAbi] },
-  signature: undefined
+      }
+    ]
+  ]
 }
 ```
 
@@ -457,7 +454,6 @@ Example:
 ```
 
 If a user were to click the above link with a EOSIO URI compatible application installed, the transaction would be triggered within the end users chosen EOSIO client.
-
 
 ### Custom QR Code Format
 
@@ -726,14 +722,21 @@ console.log(util.inspect(signingRequest, { showHidden: false, depth: null }));
 Existing implementation of the EOSIO URI Scheme (REV 2) include:
 
 ##### JS Libraries
- - [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request) ([npm](https://www.npmjs.com/package/eosio-signing-request)): A JavaScript library to facilitate the creation and consumption of EOSIO Signing Requests.
+- [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request) ([npm](https://www.npmjs.com/package/eosio-signing-request)): A JavaScript library to facilitate the creation and consumption of EOSIO Signing Requests.
+- [greymass/anchor-link](https://github.com/greymass/anchor-link) ([npm](https://www.npmjs.com/package/anchor-link)): A JavaScript library that uses ESR identity requests to create user sessions for bidirectional communication between applications and signature providers.
+- [greymass/anchor-link-browser-transport](https://github.com/greymass/anchor-link-browser-transport) ([npm](https://www.npmjs.com/package/anchor-link-browser-transport)): A transport layer and browser/UI toolkit that extends [greymass/anchor-link](https://github.com/greymass/anchor-link) for applications to integrate directly.
+- [greymass/anchor-link-console-transport](https://github.com/greymass/anchor-link-console-transport) ([npm](https://www.npmjs.com/package/anchor-link-console-transport)): A transport layer for developers working with ESR to interact with [greymass/anchor-link](https://github.com/greymass/anchor-link) in a console environment.
+- [greymass/ual-anchor](https://github.com/greymass/ual-anchor) ([npm](https://www.npmjs.com/package/ual-anchor)): A JavaScript plugin for [EOSIO/universal-authenticator-library](https://github.com/EOSIO/universal-authenticator-library) that uses [greymass/anchor-link](https://github.com/greymass/anchor-link) to allow authentication using the ESR protocol.
+
+##### Swift Libraries
+- [greymass/swift-eosio](https://github.com/greymass/swift-eosio): A library for working with EOSIO blockchains, which has built-in support for ESR requests similar to [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request).
 
 ##### Signature Providers
-- [Anchor](https://github.com/greymass/eos-voter): ESR compatible wallet/signature provider (formerly "eos-voter", or "Greymass Wallet").
+- [Anchor](https://github.com/greymass/eos-voter): ESR compatible wallet/signature provider.
 
 ##### User Interfaces
-- [EOSIO.to](https://eosio.to) (([src](https://github.com/greymass/eosio.to)): Provides Signing Request verification and signature provider hooks.
-- [EOSIO URI Builder](https://greymass.github.io/eosio-uri-builder/) ([src](https://github.com/greymass/eosio-uri-builder)): User Interface to encode/decode EOSIO Signing Requests.
+- [EOSIO.to](https://eosio.to) ([source code](https://github.com/greymass/eosio.to)): Provides Signing Request verification and signature provider hooks.
+- [EOSIO URI Builder](https://greymass.github.io/eosio-uri-builder/) ([source code](https://github.com/greymass/eosio-uri-builder)): User Interface to encode/decode EOSIO Signing Requests.
 
 ## Appendix
 
