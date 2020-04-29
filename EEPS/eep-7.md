@@ -7,7 +7,7 @@ status: Draft
 type: Standards Track
 category: Interface
 created: 2019-05-19
-updated: 2020-01-16
+updated: 2020-04-14
 ---
 
 # EOSIO Signing Request
@@ -51,7 +51,7 @@ While other protocols already exist within EOSIO for more intricate cross-applic
 
 ## Specification
 
-The following specification sets out to define the technical standards used and the actual composition of an EOSIO Signing Request payload. While this written specification uses examples in JavaScript/JSON, the concepts are be compatible within any modern programming environment.
+The following specification sets out to define the technical standards used and the actual composition of an EOSIO Signing Request payload. Examples in this specification uses the JSON representation of the ABI data.
 
 **Table of Contents - Specification**
 - [EOSIO Client Implementation Guidelines](#eosio-client-implementation-guidelines)
@@ -78,7 +78,7 @@ The following are a set of guidelines in which end user applications (e.g. signa
 
 ### Signing Request Specification
 
-In its encapsulated form, and EOSIO Signing Request is a data structure which has been converted to [base64u](#Base64u) (URL safe) and then [compressed](#Compression), and is representable as a string:
+In its encapsulated form, an EOSIO Signing Request is a binary data structure which has been [compressed](#Compression) and converted to [base64u](#Base64u), and is representable as a string:
 
 ```
 gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA
@@ -86,34 +86,34 @@ gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA
 
 The above payload is a signing request for a transaction on EOS to perform the `voteproducer` action on the `eosio` contract. The data contained within the action itself also specifies the proxy of `greymassvote`.
 
-Once decoded/inflated ([preview request](https://eosio.to/gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA)) it will return the following data:
+Once decoded and inflated ([preview request](https://eosio.to/gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA)) it will return the following data:
 
-```
+```jsonc
 {
-  "callback": "",
-  "chain_id": [ "chain_alias", 1 ],
-  "flags": 1,
-  "info": [],
-  "req": [
-    [
-      "action[]",
-      {
-        "account": "eosio",
-        "name": "voteproducer",
-        "authorization": [
-          {
-            "actor": "............1",
-            "permission": "............2"
-          }
-        ],
-        "data": {
-          "voter": "............1",
-          "proxy": "greymassvote",
-          "producers": []
-        }
-      }
+    "callback": "",
+    "chain_id": ["chain_alias", 1],
+    "flags": 1,
+    "info": [],
+    "req": [
+        [
+            "action",
+            {
+                "account": "eosio",
+                "name": "voteproducer",
+                "authorization": [
+                    {
+                        "actor": "............1",
+                        "permission": "............2"
+                    }
+                ],
+                "data": {
+                    "voter": "............1",
+                    "proxy": "greymassvote",
+                    "producers": []
+                }
+            }
+        ]
     ]
-  ]
 }
 ```
 
@@ -121,196 +121,338 @@ This decoded data can then be used to prompt action from an end user in their pr
 
 ### Data Format
 
-The decoded payload of each Signing Request consists of two parts:
+The decoded payload of each Signing Request consists of three parts:
 
   - a 1-byte header
-  - a X-byte payload (`X = length(path) - 1`)
+  - a N-byte payload
+  - an optional 65-byte signature
 
 ```
-header  request
-1000001000000000000000000000...
+header  request                 signature
+1000001000000000000000000000...[00000000000000000000000000000000...]
 ```
 
 #### Header
 
-The header consists of the first 8 bits, with the first 7 bits representing the protocol version and the last bit denoting if the data is compressed. The protocol version this document describes is `2`, making the only valid headers:
+The header is the 8 initial bits of the data, with the first 7 bits representing the protocol version and the last bit denoting if the data is compressed. The protocol version this document describes is `2`, making the only valid headers:
 
 - `0x02` a uncompressed payload
 - `0x82` a compressed payload
 
 #### Payload
 
-All data beyond the first 8 bits forms the representation of the Signing Request payload. This structure is as follows:
+Data beyond the 1-byte header forms the representation of the request payload. This structure is as follows (in byte order):
 
   param            | description
  ------------------|-------------
-  `callback`  | A templatable URL a POST request should be triggered to after the transaction is broadcast/signed
-  `chain_id`  | 32-byte id of target chain or 1-byte alias ([Chain Aliases](#chain-aliases))
-  `flags`     | Various flags for how to process this transaction
-  `info`      | Optional metadata to pass along with the request
-  `req`       | The transaction(s) being requested
+  `chain_id`       | Target chain id
+  `req`            | The action/tx/identity being requested
+  `flags`          | Various flags for how to process this transaction
+  `callback`       | URL that should be triggered to after the transaction is signed
+  `info`           | Additional metadata to pass along with the request
 
-Many of these fields are further outlined below. An extended schema of this payload can be found in the Appendix as both an [EOSIO C++ struct](#signing-request-represented-as-a-eosio-c-struct) and an [ABI of ESR](#signing-request-represented-as-an-eosio-abi).
+A representation of this schema can be found in the Appendix as both an [EOSIO C++ struct](#signing-request-represented-as-a-eosio-c-struct) and an [EOSIO ABI Definition](#signing-request-represented-as-an-eosio-abi).
 
----
+##### `chain_id`
+
+The EOSIO chain the request is valid for, can be either a full 32-byte chain id or a 1-byte [chain alias](#chain-aliases).
+
+```jsonc
+{
+    "chain_id": [
+        "chain_alias",
+        1 // eos mainnet
+    ]
+}
+```
 
 ##### `req`
 
-The actual EOSIO transaction(s) involved in a signing request exist within the `req` parameter. This data consists of an array where the first value is the `type` of request and the second value is the `data`.
+The actual data to be processed the request, can be one of the following:
 
-The `type` of data can be one of the following:
+  - `action` or `action[]`: a single action or a list of actions
+  - `transaction`: a full EOSIO transaction
+  - `identity`: a identity request
 
-  - `action`: a request containing data for a single EOSIO contract action
-  - `action[]`: a request containing a array of actions for one or more EOSIO contract actions
-  - `identity`: a request type used to facilitate identity requests (login, etc)
-  - `transaction`: a request containing a full EOSIO transaction
+###### `req - action | action[]`
 
-Example data structures of each are listed below.
-
-###### `req`, `type: 'action'`
-
-The most basic form of a signing request is to pass a single action and the data to include when creating a signature. In simple terms this data can be illustrated as:
-
-```
-[
-  'action',
-  { ... action }
-]
-```
-
-The first value of the array, the type `action`, indicates that the second value is an object containing a singular action that needs to be both templated and included in a transaction using current TAPoS values.
+The simplest form of a signing request is to just pass the action(s) that should be signed. When the request is resolved to a transaction clients **MUST** create a valid transaction header (see [resolving requests](#resolving-requests).
 
 Example:
 
-```
+```jsonc
 {
-  req: [
-    'action',
-    {
-      account: 'eosio.forum',
-      name: 'vote',
-      authorization: [ { actor: '............1', permission: '............2' } ],
-      data: '0100000000000000000000204643BABA0100'
-    }
-  ],
-}
-```
-
-###### `req`, `type: 'action[]'`
-
-The second option is to pass an array of actions, which can all be bundled together into a single transaction. The simple syntax using this method is as follows:
-
-```
-[
-  'action[]',
-  [
-    { ... action1 },
-    { ... action2 },
-  ]
-]
-```
-
-The first value being `action[]` indicates that the second value is an array of multiple actions that needs to be both templated and included in a transaction using current TAPoS values.
-
-Example:
-
-```
-{
-  req: [
-    'action[]',
-    [
-      {
-        account: 'eosio.token',
-        name: 'transfer',
-        authorization: [ { actor: '............1', permission: '............2' } ],
-        data: { ... action data }
-      },
-      {
-        account: 'eosio.token',
-        name: 'transfer',
-        authorization: [ { actor: '............1', permission: '............2' } ],
-        data: { ... action data }
-      }
+    "req": [
+        "action",
+        {
+            "account": "eosio.forum",
+            "name": "vote",
+            "authorization": [{"actor": "............1", "permission": "............2"}],
+            "data": "0100000000000000000000204643BABA0100"
+        }
     ]
-  ],
 }
 ```
 
-###### `req`, `type: 'identity'`
+###### `req - transaction`
 
-TODO: Section needs to be written
-
-###### `req`, `type: 'transaction'`
-
-The most complex option is to pass a complete transaction (including TAPoS values) directly to the signature provider, which will only require minor templating and the addition of a signature. This option is primarily to allow for flexibility, but most use cases should likely use the `action` or `action[]` method to avoid having to deal with the complication of building full transactions.
-
-**Note**: By going this route, the signature provider will either have to respect the `expiration` and TAPoS values or alter them. By using the `transaction` method, URIs may have a limited shelf life which can make statically sharing URIs more difficult.
-
-```
-[
-  'transaction',
-  { ... transaction }
-]
-```
+A full transaction, TAPoS values and expiration can all be set to zero to indicate that wallet should insert appropriate values, see  [resolving requests](#resolving-requests) for more details.
 
 Example:
 
-```
+```jsonc
 {
-  req: [
-    'transaction',
-    {
-      "transaction_id": "bc655c082a2f5738ef8c40ee676daca8f20b2a7fcce7532e92a4613ed342a49c",
-      "broadcast": false,
-      "transaction": {
-        "compression": "none",
-        "transaction": {
-          "expiration": "2019-03-05T23:01:09",
-          "ref_block_num": 15729,
-          "ref_block_prefix": 3775151106,
-          "max_net_usage_words": 0,
-          "max_cpu_usage_ms": 0,
-          "delay_sec": 0,
-          "context_free_actions": [],
-          "actions": [
-            {
-              "account": "eosio.forum",
-              "name": "vote",
-              "authorization": [
+    "req": [
+        "transaction",
+        {
+            "expiration": "1970-01-01T00:00:00", //
+            "ref_block_num": 0,                  // the "null" header values
+            "ref_block_prefix": 0,               //
+            "max_net_usage_words": 0,
+            "max_cpu_usage_ms": 10,
+            "delay_sec": 10,
+            "context_free_actions": [],
+            "actions": [
                 {
-                  "actor": "............1",
-                  "permission": "............2"
+                    "account": "eosio.forum",
+                    "name": "vote",
+                    "authorization": [
+                        {
+                            "actor": "............1",
+                            "permission": "............2"
+                        }
+                    ],
+                    "data": "0100000000000000000000204643BABA0100"
                 }
-              ],
-              "data": "0100000000000000000000204643BABA0100"
-            }
-          ],
-          "transaction_extensions": []
-        },
-        "signatures": []
-      }
-    }
-  ],
+            ],
+            "transaction_extensions": []
+        }
+    ]
 }
 ```
 
----
+###### `req - identity`
 
-##### `broadcast`
+Off-chain identity proof that can be returned via callback, see [identity requests](#identity-requests) for more details.
 
-TODO: Is this still part of the specification? Should this be removed?
+##### `flags`
 
-Each signing request has a boolean field for whether or not the signed transaction should be broadcast to the associated blockchain after a signature has been created.
+1-byte bit-field containing the request flags, available flags (in bit-order)
 
-By default, the `broadcast` parameter is set to `true`.
+  1. Broadcast - if set the transaction **MUST** be broadcast after signing
+  2. Background - if set the callback url (if any) **SHOULD** be sent via HTTP POST if the scheme is http or https
 
-Setting the `broadcast` field to `false` and specifying a `callback` will allow the signature provider to create a signature for the transaction but prevent the signature provider from broadcasting the transaction to the blockchain. The signature (and additional data) instead will then be passed to the `callback` URL, allowing the originator of the request to finalize the transaction and broadcast if needed.
-
----
+If the broadcast flag is set when the req data is of type `identity` the request **MUST** be rejected.
 
 ##### `callback`
 
-TODO: This needs to be changed to include the object version of the callback field, if that's still possible.
+Callback URL, if set client **SHOULD** attempt to deliver the [callback payload](#callback-payload) to it, see [callbacks](#callbacks) for more details.
+
+##### `info`
+
+Request metadata, key value pairs with arbitrary data that can be used to implement extended functionality.
+
+Example:
+
+```jsonc
+{
+    "info": [
+        {
+            "key": "hello",
+            "value": "776f726c64" // utf-8 "world"
+        }
+    ]
+}
+```
+
+## Resolving requests
+
+To resolve a signing request to a transaction that can be signed the following steps are taken.
+
+### Create transaction from payload
+
+The payload type is inspected, for `action` and `action[]` a transaction is constructed with the [null header](#null-transaction-header) and the action(s) are inserted.
+
+Payloads with type `identity` are resolved to the [identity proof](#identity-proof) action and then treated just like `action`.
+
+For the `transaction` type the full transaction is taken as-is.
+
+### Resolve action placeholders
+
+The action data and authorization is inspected and all fields with the `name` that contain an [action placeholder](#action-placeholders) value is resolved.
+
+ * `............1` (`uint64(1)`) - Is resolved to the signers account name, e.g. `foobarfoobar`
+ * `............2` (`uint64(2)`) - Is resolved to the signing account permission, e.g. `active`
+
+This is performed recursively until all fields have been visited. It is recommended that implementers enforce a max recursion depth of 100.
+
+### Insert TAPoS values
+
+The transaction header is inspected and if it matches the [null header](#null-transaction-header) and the payload type is NOT `identity` appropriate TAPoS and expiration values should be inserted.
+
+```jsonc
+{
+  "expiration": "1970-01-01T00:00:00",
+  "ref_block_num": 0,
+  "ref_block_prefix": 0,
+  // ...
+}
+// resolves to something like
+{
+  "expiration": "2020-02-02T20:20:20",
+  "ref_block_num": 10444,
+  "ref_block_prefix": 4158294815,
+  // ...
+}
+
+Note that other header fields (e.g.`max_cpu_usage_ms` or `delay_sec`) must be left as-is.
+
+---
+
+Example:
+
+<esr://gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA>
+
+```jsonc
+{
+    "callback": "",
+    "chain_id": ["chain_alias", 1],
+    "flags": 1,
+    "info": [],
+    "req": [
+        [
+            "action",
+            {
+                "account": "eosio",
+                "name": "voteproducer",
+                "authorization": [
+                    {
+                        "actor": "............1",
+                        "permission": "............2"
+                    }
+                ],
+                "data": {
+                    "voter": "............1",
+                    "proxy": "greymassvote",
+                    "producers": []
+                }
+            }
+        ]
+    ]
+}
+```
+
+This request given the signer `foobarfoobar@active` and TAPoS values of `expiration=2020-02-02T20:20:20`
+ `ref_block_num=10444` `ref_block_prefix=4158294815` resolves to:
+
+```jsonc
+{
+    "ref_block_num": 10444,
+    "ref_block_prefix": 4158294815,
+    "expiration": "2020-02-02T20:20:20",
+    "max_cpu_usage_ms": 0,
+    "max_net_usage_words": 0,
+    "delay_sec": 0,
+    "context_free_actions": [],
+    "transaction_extensions": [],
+    "actions": [
+        {
+            "account": "eosio",
+            "name": "voteproducer",
+            "authorization": [
+                { "actor": "foobarfoobar", "permission": "active" }
+            ],
+            "data": {
+                "voter": "foobarfoobar",
+                "proxy": "greymassvote",
+                "producers": []
+            }
+        }
+    ]
+}
+```
+
+## Null transaction header
+
+The "null" header consists of expiration date set to `1970-01-01T00:00:00` and ref block number and prefix set to zero and is used to denote that the resolver should fill in appropriate values.
+
+```jsonc
+{
+  "expiration": "1970-01-01T00:00:00",
+  "ref_block_num": 0,
+  "ref_block_prefix": 0,
+  // ...
+}
+```
+
+## Identity requests
+
+Identity requests can be issued to allow someone to prove ownership of a EOSIO account permission. They can either request a specific permission or any permission to be used as a login request.
+
+This request type is not valid unless a callback is set since they can not be broadcast on-chain.
+
+**Note that identity requests can only verify key auths, not account auths. E.g. you can not prove ownership of `bob@active` using `alice@active` even though bob has granted alice an account auth for that permission.**
+
+### Identity proof action
+
+To create the identity proof the wallet signs a special EOSIO transaction that is not valid on-chain. The reason for it being a transaction and not just an arbitrary signature is that some hardware wallets do not support signing anything other than a EOSIO transaction.
+
+To resolve a identity request to the identity proof action the optional account permssion from the request data is copied to the following action:
+
+```jsonc
+{
+    "account": "", // uint64(0)
+    "name": "identity",
+    "authorization": [
+        {
+            "actor": "foobarfoobar",
+            "permission": "active"
+        }
+    ],
+    "data": {
+        "permission": {
+            "actor": "foobarfoobar",
+            "permission": "active"
+        }
+    }
+}
+```
+
+If the permission is not set in the request data the placeholder permission is used instead:
+
+```jsonc
+{
+    "account": "",
+    "name": "identity",
+    "authorization": [
+        {
+            "actor": "............1",
+            "permission": "............2"
+        }
+    ],
+    "data": {
+        "permission": {
+            "actor": "............1",
+            "permission": "............2"
+        }
+    }
+}
+```
+
+### Signing identity proofs
+
+The signature is just a standard EOSIO transaction signature (chainId + serializedTx + 32bytePadding) but can also be thought of as a magic if a full EOSIO library isn't available at the verification point.
+
+```
+sign(sha256(
+  __ 32 byte chain id_____________________________________________
+  00000000000000000000000000000100000000000000000000003ebb3c557201
+  __ 16 byte account permission x2 _______________________________
+  ___ 33 byte zero-padding _________________________________________
+))
+```
+
+## Callbacks
 
 An optional parameter of the signing request is the `callback`, which when set indicates how an EOSIO client should proceed after the transaction has completed. The `callback` itself is a string containing a full URL. This URL will be triggered after the transaction has been either signed or broadcast based on the `flags` provided.
 
@@ -328,43 +470,26 @@ Available Parameters:
   - `rbn`: Reference block num used when resolving request.
   - `req`: The originating signing request encoded as a uri string.
   - `rid`: Reference block id used when resolving request.
-  - `sa`: Signer authority, aka account name.
-  - `sp`: Signer permission, e.g. "active".
-  - `tx`: Transaction ID as HEX-encoded string.
+  - `sa`: Signer authority string, aka account name.
+  - `sp`: Signer permission string, e.g. "active".
+  - `req`: The originating signing request packed as a uri string.
   - `sig`: The first signature.
   - `sigX`: All signatures are 0-indexed as `sig0`, `sig1`, etc.
 
----
+When the callback is performed in the background all the parameters are included as a JSON object.
 
-##### `chain_id`
+## Request signatures
 
-This value indicates which EOSIO chain the transaction is intended for. The `chain_id` parameter accepts two different formats, a [Chain Alias](#chain_alias) or a [Chain ID](#chain_id).
+Requests can optionally be signed, a signed request has the 8-byte signer account name and 65-byte signature appended to the end of the request data.
 
-###### `chain_id`, Chain Aliases
-
-In an effort to maintain a lower payload size, a predefined list of aliases for specific `chain_id` values has been defined and can be specified using an array with `uint8` followed by the ID of the chain the request should use. The following is an example of how to use the `chain_id` with a value of `1`:
+The signing digest is created with `sha256(request_version + utf8("request") + request_data)`. Example for a version 2 request:
 
 ```
-{
-  chain_id: [ 'uint8', 1 ],
-  ... remaining payload
-}
+sha256(
+  0272657175657374
+  __ request data __
+)
 ```
-
-A full list of available [Chain Aliases](#chain-aliases) can be found in the Appendix of this document.
-
-###### `chain_id`, Chain ID
-
-Alternatively, a 32-byte ID value can be passed as the `chain_id` to specify any specific chain.
-
-```
-{
-  chain_id: [ 'checksum256', 'aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906' ],
-  ... remaining payload
-}
-```
-
-This is useful for in environments where the aliases may not be available or in chains which may not have an alias.
 
 ## Backwards Compatibility
 
@@ -788,6 +913,9 @@ The following aliases are predefined:
   `0x07` | MEETONE  | `cfe6486a83bad4962f232d48003b1824ab5665c36778141034d75e57b956e422`
   `0x08` | INSIGHTS | `b042025541e25a472bffde2d62edd457b7e70cee943412b1ea0f044f88591664`
   `0x09` | BEOS     | `b912d19a6abd2b1b05611ae5be473355d64d95aeff0c09bedc8c166cd6468fe4`
+  `0x10` | WAX      | `1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4`
+  `0x11` | PROTON   | `384da888112027f0321850a169f737c33e53b388aad48b5adace4bab97f437e0`
+  `0x12` | FIO      | `21dcae42c0182200e93f954a074011f9048a7624c6fe81d3c9541a614a88bd1c`
 
 ##### Compression
 
@@ -1085,6 +1213,7 @@ struct signing_request {
 
 - 2020/01/16: Updated to Revision 2.
 - 2019/10/28: Added change log, MIME type recommendation
+- 2020/04/29: Add details on request resolution and & signatures
 
 ## Acknowledgements
 
