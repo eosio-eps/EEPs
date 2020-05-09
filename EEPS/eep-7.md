@@ -7,76 +7,88 @@ status: Draft
 type: Standards Track
 category: Interface
 created: 2019-05-19
-updated: 2020-04-14
+updated: 2020-05-09
 ---
-
-# EOSIO Signing Request
 
 **Table of Contents**
 
-- [Summary](#Summary)
-- [Abstract](#Abstract)
-- [Motivation](#Motivation)
-- [Specification](#Specification)
-- [Backwards Compatibility](#Backwards-Compatibility)
+- [Introduction](#ESR---The--EOSIO-Signing-Request--protocol)
+  - [Summary](#Summary)
+  - [Abstract](#Abstract)
+  - [Motivation](#Motivation)
+- [Technical Specification](#Technical-Specification)
+  - [Data Format](#Data-Format)
+  - [Header](#Header)
+  - [Payload](#Payload)
+    - [`chain_id`](#chain_id)
+    - [`req`](#req)
+      - [`action | action[]`](#req---action--action)
+      - [`transaction`](#req---transaction)
+      - [`identity`](#req---identity)
+    - [`flags`](#flags)
+    - [`callback`](#callback)
+    - [`info`](#info)
+  - [Request Signatures (Optional)](#Request-Signatures)
+- [EOSIO Client Integration](#EOSIO-Client-Integration)
+  - [Implementation Guidelines](#Implementation-Guidelines)
+  - [Signature Provider Workflow](#Signature-Provider-Workflow)
+    1. [Resolving the Request](#1---Resolving-the-Request)
+    2. [Signing the resolved request](#2---Signing-the-resolved-request)
+    3. [Broadcasting the transaction](#3---Broadcasting-the-transaction)
+    4. [Issuing Callbacks](#4---Issuing-Callbacks)
 - [Use Cases](#Use-Cases)
-- [Test Cases](#Test-Cases)
 - [Implementations](#Implementations)
+  - [JS Client Frameworks](#JS-Client-Frameworks)
+  - [JS Examples](#JS-Examples)
+  - [JS Libraries](#JS-Libraries)
+  - [Swift Libraries](#Swift-Libraries)
+  - [Signature Providers](#Signature-Providers)
+  - [User Interfaces](#User-Interfaces)
+- [Test Cases](#Test-Cases)
 - [Appendix](#Appendix)
   - [Base64u](#Base64u)
+  - [Callback Proxies](#Callback-Proxies)
   - [Chain Aliases](#Chain-Aliases)
   - [Compression](#Compression)
+  - [Identity Requests](#Identity-Requests)
+    - [Identity Proof Action](#Identity-Proof-Action)
+    - [Signing Identity Proof Actions](#Signing-Identity-Proof-Actions)
+  - [MIME Type](#MIME-Type)
+  - [Null transaction header](#Null-transaction-header)
   - [Signing Request - Placeholders](#Signing-Request---Placeholders)     
   - [Signing Request - Schema](#Signing-Request---Schema)
     - [EOSIO ABI](#Signing-Request-represented-as-a-EOSIO-C-struct)
     - [EOSIO C++ struct](#Signing-Request-represented-as-an-EOSIO-ABI)
-  - [Signing Request - Templating](#Signing-Request---Templating)
+- [Backwards Compatibility](#Backwards-Compatibility)
 - [Change Log](#Change-Log)
 - [Acknowledgements](#Acknowledgements)
 - [Copyright](#Copyright)
 
-## Summary
+---
+
+# ESR - The "EOSIO Signing Request" protocol
+
+### Summary
 
 A standard protocol for an EOSIO-based signing request payload to allow communication between applications and signature providers.
 
-## Abstract
+### Abstract
 
 EOSIO Signing Requests encapsulate transaction data for transport within multiple mediums (e.g. QR codes and hyperlinks), providing a simple cross-application signaling method between very loosely coupled applications. A standardized request data payload allows instant invocation of specific transaction templates within the user's preferred EOSIO signature provider.
 
-## Motivation
+### Motivation
 
 The ability to represent a transaction in a standardized signing request format has been a major factor in driving end user adoption within many blockchain ecosystems. Introducing a similar mechanism into the EOSIO ecosystem would speed up adoption by providing a versatile data format which allows requests across any medium.
 
-While other protocols already exist within EOSIO for more intricate cross-application communication - this proposal seeks to establish a primitive request payload for use in any type of application.
+While other protocols already exist within EOSIO for more intricate cross-application communication - this proposal seeks to establish a primitive request payload for use in any type of application on any device.
 
-## Specification
+---
+
+## Technical Specification
 
 The following specification sets out to define the technical standards used and the actual composition of an EOSIO Signing Request payload. Examples in this specification uses the JSON representation of the ABI data.
 
-**Table of Contents - Specification**
-- [EOSIO Client Implementation Guidelines](#eosio-client-implementation-guidelines)
-- [Signing Request](#signing-request-specification)
-  - [Data Format](#data-format)
-  - [Header](#header)
-  - [Payload](#payload)
-    - [`req`](#req)
-    - [`broadcast`](#broadcast)
-    - [`callback`](#callback)
-    - [`chain_id`](#chain_id)
-
-
-### EOSIO Client Implementation Guidelines
-
-The following are a set of guidelines in which end user applications (e.g. signature providers) that handle EOSIO Signing Requests should respect.
-
-- EOSIO clients **MUST NOT** automatically act upon the data contained within a Signing Request without the user's authorization.
-- EOSIO clients **MUST** decode and present the transaction data in a human readable format for review before creating a signature.
-- EOSIO clients **SHOULD** inform the user of any callback which will be executed upon completion of a signing request.
-- EOSIO clients **SHOULD** register themselves as the handler for the `esr:` URI scheme by default, so long as no other handlers already exist. If a registered handler already exists, they **MAY** prompt the user to change it upon request.
-- EOSIO clients **SHOULD** allow the use of proxies when handling callbacks ([Callback Proxies](#callback-proxies)).
-- EOSIO clients **SHOULD** use the recommended MIME type when applicable in their implementations.
-
-### Signing Request Specification
+## Signing Request Specification
 
 In its encapsulated form, an EOSIO Signing Request is a binary data structure which has been [compressed](#Compression) and converted to [base64u](#Base64u), and is representable as a string:
 
@@ -132,51 +144,70 @@ header  request                 signature
 1000001000000000000000000000...[00000000000000000000000000000000...]
 ```
 
-#### Header
+### Header
 
 The header is the 8 initial bits of the data, with the first 7 bits representing the protocol version and the last bit denoting if the data is compressed. The protocol version this document describes is `2`, making the only valid headers:
 
 - `0x02` a uncompressed payload
 - `0x82` a compressed payload
 
-#### Payload
+### Payload
 
 Data beyond the 1-byte header forms the representation of the request payload. This structure is as follows (in byte order):
 
   param            | description
  ------------------|-------------
-  `chain_id`       | Target chain id
-  `req`            | The action/tx/identity being requested
-  `flags`          | Various flags for how to process this transaction
-  `callback`       | URL that should be triggered to after the transaction is signed
-  `info`           | Additional metadata to pass along with the request
+  [`chain_id`](#chain_id)       | Target chain id
+  [`req`](#req)            | The action/tx/identity being requested
+  [`flags`](#flags)          | Various flags for how to process this transaction
+  [`callback`](#callback)       | URL that should be triggered to after the transaction is signed
+  [`info`](#info)           | Additional metadata to pass along with the request
 
 A representation of this schema can be found in the Appendix as both an [EOSIO C++ struct](#signing-request-represented-as-a-eosio-c-struct) and an [EOSIO ABI Definition](#signing-request-represented-as-an-eosio-abi).
 
-##### `chain_id`
+#### `chain_id`
 
-The EOSIO chain the request is valid for, can be either a full 32-byte chain id or a 1-byte [chain alias](#chain-aliases).
+The EOSIO blockchain this request is valid for.
+
+This can be either a full 32-byte chain id:
 
 ```jsonc
 {
-    "chain_id": [
-        "chain_alias",
-        1 // eos mainnet
+    "chain_id": "aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906"
+}
+```
+
+Or a 1-byte [chain alias](#chain-aliases) can be used (`1` being defined EOS):
+
+
+```jsonc
+{
+    "chain_id": [ "chain_alias", 1 ]
+}
+```
+
+#### `req`
+
+The request data is a 2-part tuple, with the first part being the type and the second part being the data itself.
+
+```jsonc
+{
+    "req": [
+      'request_type',
+      'request_data'
     ]
 }
 ```
 
-##### `req`
-
-The actual data to be processed the request, can be one of the following:
+The data to be processed from the request can be one of the following request types:
 
   - `action` or `action[]`: a single action or a list of actions
   - `transaction`: a full EOSIO transaction
   - `identity`: a identity request
 
-###### `req - action | action[]`
+###### Request type: `action | action[]`
 
-The simplest form of a signing request is to just pass the action(s) that should be signed. When the request is resolved to a transaction clients **MUST** create a valid transaction header (see [resolving requests](#resolving-requests).
+The most compact and simple form of a signing request is to just pass the action(s) that should be signed. When the request is resolved to a transaction, the client **MUST** create a valid transaction header (see [resolving requests](#resolving-signing-requests)).
 
 Example:
 
@@ -194,9 +225,9 @@ Example:
 }
 ```
 
-###### `req - transaction`
+###### Request type: `transaction`
 
-A full transaction, TAPoS values and expiration can all be set to zero to indicate that wallet should insert appropriate values, see  [resolving requests](#resolving-requests) for more details.
+A full transaction, TAPoS values and expiration can be defined or all be set to [null transaction header values](#null-transaction-header) to indicate that signature provider should insert appropriate values (see [resolving requests](#resolving-signing-requests)).
 
 Example:
 
@@ -231,11 +262,11 @@ Example:
 }
 ```
 
-###### `req - identity`
+###### Request type: `identity`
 
 Off-chain identity proof that can be returned via callback, see [identity requests](#identity-requests) for more details.
 
-##### `flags`
+#### `flags`
 
 1-byte bit-field containing the request flags, available flags (in bit-order)
 
@@ -244,11 +275,11 @@ Off-chain identity proof that can be returned via callback, see [identity reques
 
 If the broadcast flag is set when the req data is of type `identity` the request **MUST** be rejected.
 
-##### `callback`
+#### `callback`
 
-Callback URL, if set client **SHOULD** attempt to deliver the [callback payload](#callback-payload) to it, see [callbacks](#callbacks) for more details.
+Callback URL, if set client **SHOULD** attempt to deliver the [callback payload](#callback-payload) to it, see [callbacks](#issuing-callbacks) for more details.
 
-##### `info`
+#### `info`
 
 Request metadata, key value pairs with arbitrary data that can be used to implement extended functionality.
 
@@ -265,30 +296,66 @@ Example:
 }
 ```
 
-## Resolving requests
+### Request Signatures
 
-To resolve a signing request to a transaction that can be signed the following steps are taken.
+Requests can optionally be signed to provide proof of the origin of the request. A signed request has the 8-byte signer account name and 65-byte signature appended to the end of the request data.
 
-### Create transaction from payload
+The signing digest is created with `sha256(request_version + utf8("request") + request_data)`. Example for a version 2 request:
 
-The payload type is inspected, for `action` and `action[]` a transaction is constructed with the [null header](#null-transaction-header) and the action(s) are inserted.
+```
+sha256(
+  0272657175657374
+  __ request data __
+)
+```
 
-Payloads with type `identity` are resolved to the [identity proof](#identity-proof) action and then treated just like `action`.
+---
 
-For the `transaction` type the full transaction is taken as-is.
+## EOSIO Client Integration
 
-### Resolve action placeholders
+### Implementation Guidelines
+
+The following are a set of guidelines in which end user applications (e.g. signature providers) that handle EOSIO Signing Requests should respect.
+
+- EOSIO clients **MUST NOT** automatically act upon the data contained within a Signing Request without the user's authorization.
+- EOSIO clients **MUST** decode and present the transaction data in a human readable format for review before creating a signature.
+- EOSIO clients **SHOULD** inform the user of any callback which will be executed upon completion of a signing request.
+- EOSIO clients **SHOULD** register themselves as the handler for the `esr:` URI scheme by default, so long as no other handlers already exist. If a registered handler already exists, they **MAY** prompt the user to change it upon request.
+- EOSIO clients **SHOULD** allow the [use of proxies](#callback-proxies) when [handling callbacks](#issuing-callbacks).
+- EOSIO clients **SHOULD** use the [recommended MIME type](#mime-type) when applicable in their implementations.
+
+### Signature Provider Workflow
+
+Signature providers (a.k.a "Wallets") will need to go through a series of steps in order to interpret and resolve an ESR payload before being able to sign the resulting transaction.
+
+#### 1. Resolving the Request
+
+To resolve a signing request to a transaction that can be signed the following steps are taken:
+
+- [A) Create transaction from payload](A--Create-transaction-from-payload)
+- [B) Resolve action placeholders](B--Resolve-action-placeholders)
+- [C) Insert TAPoS values](C--Insert-TAPoS-values)
+
+###### A) Create transaction from payload
+
+The payload should be inspected to determine the [request type](#req) and determine how to interpret the request data.
+
+- Payloads with the `action` and `action[]` types should construct a transaction with the [null header](#null-transaction-header) and then insert the action(s) contained within the request.
+- Payloads with type `identity` are resolved to the [identity proof](#identity-proof) action and then treated just like an `action` request.
+- For the `transaction` type the full transaction is taken as-is.
+
+###### B) Resolve action placeholders
 
 The action data and authorization is inspected and all fields with the `name` that contain an [action placeholder](#action-placeholders) value is resolved.
 
- * `............1` (`uint64(1)`) - Is resolved to the signers account name, e.g. `foobarfoobar`
+ * `............1` (`uint64(1)`) - Is resolved to the signing account name, e.g. `foobarfoobar`
  * `............2` (`uint64(2)`) - Is resolved to the signing account permission, e.g. `active`
 
 This is performed recursively until all fields have been visited. It is recommended that implementers enforce a max recursion depth of 100.
 
-### Insert TAPoS values
+###### C) Insert TAPoS values
 
-The transaction header is inspected and if it matches the [null header](#null-transaction-header) and the payload type is NOT `identity` appropriate TAPoS and expiration values should be inserted.
+The transaction header is inspected and if it matches the [null transaction header](#null-transaction-header) and the payload type is NOT `identity` appropriate TAPoS and expiration values should be inserted.
 
 ```jsonc
 {
@@ -304,14 +371,11 @@ The transaction header is inspected and if it matches the [null header](#null-tr
   "ref_block_prefix": 4158294815,
   // ...
 }
+```
 
-Note that other header fields (e.g.`max_cpu_usage_ms` or `delay_sec`) must be left as-is.
+**Note**: other header fields (e.g.`max_cpu_usage_ms` or `delay_sec`) must be left as-is.
 
----
-
-Example:
-
-<esr://gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA>
+Example: <esr://gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA>
 
 ```jsonc
 {
@@ -342,8 +406,7 @@ Example:
 }
 ```
 
-This request given the signer `foobarfoobar@active` and TAPoS values of `expiration=2020-02-02T20:20:20`
- `ref_block_num=10444` `ref_block_prefix=4158294815` resolves to:
+This request given the signer `foobarfoobar@active` and TAPoS values of `expiration=2020-02-02T20:20:20`, `ref_block_num=10444`, and `ref_block_prefix=4158294815` resolves to:
 
 ```jsonc
 {
@@ -372,87 +435,17 @@ This request given the signer `foobarfoobar@active` and TAPoS values of `expirat
 }
 ```
 
-## Null transaction header
+### 2. Signing the resolved request
 
-The "null" header consists of expiration date set to `1970-01-01T00:00:00` and ref block number and prefix set to zero and is used to denote that the resolver should fill in appropriate values.
+Now with a standard EOSIO transaction, the signature provider should use their native capabilities to create a signature for the transaction.
 
-```jsonc
-{
-  "expiration": "1970-01-01T00:00:00",
-  "ref_block_num": 0,
-  "ref_block_prefix": 0,
-  // ...
-}
-```
+### 3. Broadcasting the transaction
 
-## Identity requests
+Depending on the state of the [`broadcast`](#flags) flag in the request, the signature provider may be asked to broadcast this transaction directly to the appropriate blockchain before issuing the callback.
 
-Identity requests can be issued to allow someone to prove ownership of a EOSIO account permission. They can either request a specific permission or any permission to be used as a login request.
+This flag should always be respected by the signature provider, as the application issuing the signing request may want to broadcast the transaction to a specific API endpoint for further processing.
 
-This request type is not valid unless a callback is set since they can not be broadcast on-chain.
-
-**Note that identity requests can only verify key auths, not account auths. E.g. you can not prove ownership of `bob@active` using `alice@active` even though bob has granted alice an account auth for that permission.**
-
-### Identity proof action
-
-To create the identity proof the wallet signs a special EOSIO transaction that is not valid on-chain. The reason for it being a transaction and not just an arbitrary signature is that some hardware wallets do not support signing anything other than a EOSIO transaction.
-
-To resolve a identity request to the identity proof action the optional account permssion from the request data is copied to the following action:
-
-```jsonc
-{
-    "account": "", // uint64(0)
-    "name": "identity",
-    "authorization": [
-        {
-            "actor": "foobarfoobar",
-            "permission": "active"
-        }
-    ],
-    "data": {
-        "permission": {
-            "actor": "foobarfoobar",
-            "permission": "active"
-        }
-    }
-}
-```
-
-If the permission is not set in the request data the placeholder permission is used instead:
-
-```jsonc
-{
-    "account": "",
-    "name": "identity",
-    "authorization": [
-        {
-            "actor": "............1",
-            "permission": "............2"
-        }
-    ],
-    "data": {
-        "permission": {
-            "actor": "............1",
-            "permission": "............2"
-        }
-    }
-}
-```
-
-### Signing identity proofs
-
-The signature is just a standard EOSIO transaction signature (chainId + serializedTx + 32bytePadding) but can also be thought of as a magic if a full EOSIO library isn't available at the verification point.
-
-```
-sign(sha256(
-  __ 32 byte chain id_____________________________________________
-  00000000000000000000000000000100000000000000000000003ebb3c557201
-  __ 16 byte account permission x2 _______________________________
-  ___ 33 byte zero-padding _________________________________________
-))
-```
-
-## Callbacks
+### 4. Issuing Callbacks
 
 An optional parameter of the signing request is the `callback`, which when set indicates how an EOSIO client should proceed after the transaction has completed. The `callback` itself is a string containing a full URL. This URL will be triggered after the transaction has been either signed or broadcast based on the `flags` provided.
 
@@ -478,22 +471,7 @@ Available Parameters:
 
 When the callback is performed in the background all the parameters are included as a JSON object.
 
-## Request signatures
-
-Requests can optionally be signed, a signed request has the 8-byte signer account name and 65-byte signature appended to the end of the request data.
-
-The signing digest is created with `sha256(request_version + utf8("request") + request_data)`. Example for a version 2 request:
-
-```
-sha256(
-  0272657175657374
-  __ request data __
-)
-```
-
-## Backwards Compatibility
-
-- Revision 2 of the ESR signing protocol introduces breaking changes from Revision 1.
+---
 
 ## Use Cases
 
@@ -587,6 +565,50 @@ As well as being portable enough for usage within a URI/URL format, the same pay
 ![qrcode:gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA](../assets/eep-7/qrcode.png)
 
 Scanning the above QR code on a device with QR Code capabilities could trigger the payload within the end user specified signature provider.
+
+---
+
+## Implementations
+
+Existing implementation of the EOSIO URI Scheme (REV 2) include:
+
+##### JS Client Frameworks
+
+- [greymass/anchor-link](https://github.com/greymass/anchor-link) ([npm](https://www.npmjs.com/package/anchor-link)): A JavaScript library that uses ESR identity requests to create user sessions for bidirectional communication between applications and signature providers.
+- [eosnewyork/eos-transit-anchorlink-provider](https://github.com/eosnewyork/eos-transit/tree/master/packages/eos-transit-anchorlink-provider) ([npm](https://www.npmjs.com/package/eos-transit-anchorlink-provider)): A JavaScript plugin for [eosnewyork/eos-transit](https://github.com/eosnewyork/eos-transit) that uses [greymass/anchor-link](https://github.com/greymass/anchor-link) to allow authentication and signing requests using the ESR protocol.
+- [greymass/ual-anchor](https://github.com/greymass/ual-anchor) ([npm](https://www.npmjs.com/package/ual-anchor)): A JavaScript plugin for [EOSIO/universal-authenticator-library](https://github.com/EOSIO/universal-authenticator-library) that uses [greymass/anchor-link](https://github.com/greymass/anchor-link) to allow authentication and signing requests using the ESR protocol.
+
+##### JS Examples
+
+- [greymass/anchor-link-demo](https://github.com/greymass/anchor-link-demo): A VueJS example webapp supporting a single account capable of signing any contract/action using the [greymass/anchor-link](https://github.com/greymass/anchor-link) library.
+- [greymass/anchor-link-demo-multipass](https://github.com/greymass/anchor-link-demo-multipass): A ReactJS example webapp supporting multiple accounts and multiple blockchains using the [greymass/anchor-link](https://github.com/greymass/anchor-link) library.
+- [greymass/greymassfuel-transit-demo](https://github.com/greymass/greymassfuel-transit-demo): A VueJS example webapp using [eosnewyork/eos-transit](https://github.com/eosnewyork/eos-transit) and [eosnewyork/eos-transit-anchorlink-provider](https://github.com/eosnewyork/eos-transit/tree/master/packages/eos-transit-anchorlink-provider) to create example transactions that use OBFA action.
+- [greymass/ual-anchor-demo](https://github.com/greymass/ual-anchor-demo): An example based on the [EOSIO/ual-plainjs-renderer](https://github.com/EOSIO/ual-plainjs-renderer/tree/master/examples) example, utilizing [greymass/ual-anchor](https://github.com/greymass/ual-anchor).
+- [greymass/eosio-signing-request-demo](https://github.com/greymass/eosio-signing-request-demo): Example code using the base [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request) library to create request payloads.
+
+
+##### JS Libraries
+- [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request) ([npm](https://www.npmjs.com/package/eosio-signing-request)): A JavaScript library to facilitate the creation and consumption of EOSIO Signing Requests.
+- [greymass/anchor-link-browser-transport](https://github.com/greymass/anchor-link-browser-transport) ([npm](https://www.npmjs.com/package/anchor-link-browser-transport)): A transport layer and browser/UI toolkit that extends [greymass/anchor-link](https://github.com/greymass/anchor-link) for applications to integrate directly.
+- [greymass/anchor-link-console-transport](https://github.com/greymass/anchor-link-console-transport) ([npm](https://www.npmjs.com/package/anchor-link-console-transport)): A transport layer for developers working with ESR to interact with [greymass/anchor-link](https://github.com/greymass/anchor-link) in a console environment.
+
+##### Java Libraries
+
+- In Development
+
+##### Swift Libraries
+- [greymass/swift-eosio](https://github.com/greymass/swift-eosio): A library for working with EOSIO blockchains, which has built-in support for ESR requests similar to [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request).
+
+##### Signature Providers
+
+- [Anchor](https://github.com/greymass/eos-voter): ESR compatible wallet/signature provider.
+
+##### User Interfaces
+
+- [EOSIO.to](https://eosio.to) ([source code](https://github.com/greymass/eosio.to)): Provides Signing Request verification and signature provider hooks.
+- [EOSIO URI Builder](https://greymass.github.io/eosio-uri-builder/) ([source code](https://github.com/greymass/eosio-uri-builder)): User Interface to encode/decode EOSIO Signing Requests.
+
+---
 
 ## Test Cases
 
@@ -842,26 +864,7 @@ console.log(util.inspect(signingRequest, { showHidden: false, depth: null }));
 */
 ````
 
-## Implementations
-
-Existing implementation of the EOSIO URI Scheme (REV 2) include:
-
-##### JS Libraries
-- [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request) ([npm](https://www.npmjs.com/package/eosio-signing-request)): A JavaScript library to facilitate the creation and consumption of EOSIO Signing Requests.
-- [greymass/anchor-link](https://github.com/greymass/anchor-link) ([npm](https://www.npmjs.com/package/anchor-link)): A JavaScript library that uses ESR identity requests to create user sessions for bidirectional communication between applications and signature providers.
-- [greymass/anchor-link-browser-transport](https://github.com/greymass/anchor-link-browser-transport) ([npm](https://www.npmjs.com/package/anchor-link-browser-transport)): A transport layer and browser/UI toolkit that extends [greymass/anchor-link](https://github.com/greymass/anchor-link) for applications to integrate directly.
-- [greymass/anchor-link-console-transport](https://github.com/greymass/anchor-link-console-transport) ([npm](https://www.npmjs.com/package/anchor-link-console-transport)): A transport layer for developers working with ESR to interact with [greymass/anchor-link](https://github.com/greymass/anchor-link) in a console environment.
-- [greymass/ual-anchor](https://github.com/greymass/ual-anchor) ([npm](https://www.npmjs.com/package/ual-anchor)): A JavaScript plugin for [EOSIO/universal-authenticator-library](https://github.com/EOSIO/universal-authenticator-library) that uses [greymass/anchor-link](https://github.com/greymass/anchor-link) to allow authentication using the ESR protocol.
-
-##### Swift Libraries
-- [greymass/swift-eosio](https://github.com/greymass/swift-eosio): A library for working with EOSIO blockchains, which has built-in support for ESR requests similar to [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request).
-
-##### Signature Providers
-- [Anchor](https://github.com/greymass/eos-voter): ESR compatible wallet/signature provider.
-
-##### User Interfaces
-- [EOSIO.to](https://eosio.to) ([source code](https://github.com/greymass/eosio.to)): Provides Signing Request verification and signature provider hooks.
-- [EOSIO URI Builder](https://greymass.github.io/eosio-uri-builder/) ([source code](https://github.com/greymass/eosio-uri-builder)): User Interface to encode/decode EOSIO Signing Requests.
+---
 
 ## Appendix
 
@@ -906,8 +909,8 @@ The following aliases are predefined:
   `0x00` | RESERVED |
   `0x01` | EOS      | `aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906`
   `0x02` | TELOS    | `4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11`
-  `0x03` | JUNGLE   | `038f4b0fc8ff18a4f0842a8f0564611f6e96e8535901dd45e43ac8691a1c4dca`
-  `0x04` | KYLIN    | `5fff1dae8dc8e2fc4d5b23b2c7665c97f9e9d8edf2b6485a86ba311c25639191`
+  `0x03` | JUNGLE (Testnet)   | `038f4b0fc8ff18a4f0842a8f0564611f6e96e8535901dd45e43ac8691a1c4dca`
+  `0x04` | KYLIN (Testnet)   | `5fff1dae8dc8e2fc4d5b23b2c7665c97f9e9d8edf2b6485a86ba311c25639191`
   `0x05` | WORBLI   | `73647cde120091e0a4b85bced2f3cfdb3041e266cbbe95cee59b73235a1b3b6f`
   `0x06` | BOS      | `d5a3d18fbb3c084e3b1f3fa98c21014b5f3db536cc15d08f9f6479517c6a3d86`
   `0x07` | MEETONE  | `cfe6486a83bad4962f232d48003b1824ab5665c36778141034d75e57b956e422`
@@ -916,6 +919,8 @@ The following aliases are predefined:
   `0x10` | WAX      | `1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4`
   `0x11` | PROTON   | `384da888112027f0321850a169f737c33e53b388aad48b5adace4bab97f437e0`
   `0x12` | FIO      | `21dcae42c0182200e93f954a074011f9048a7624c6fe81d3c9541a614a88bd1c`
+  `0x13` | FIO (Testnet)      | `b20901380af44ef59c5918439a1f9a41d83669020319a80574b804a5f95cbd7e`
+  `0x14` | WAX (Testnet)      | `1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f`
 
 ##### Compression
 
@@ -933,6 +938,87 @@ esr:AQABAACmgjQD6jBVAAAAVy08zc0BAQAAAAAAAAABAAAAAAAAADEBAAAAAAAAAAAAAAAAAChdoGgG
 zlib deflated:
 
 esr:gWNgZGBY1mTC_MoglIGBIVzX5uxZRqAQGMBoQxgDAjRiF2SwgVksrv7BIFqgOCOxKFUhMS9FITUvK79SkZEBAA
+```
+
+##### Identity Requests
+
+Identity requests can be issued to allow someone to prove ownership of a EOSIO account permission. They can either request a specific permission or any permission to be used as a login request.
+
+This request type is not valid unless a callback is set since they can not be broadcast on-chain.
+
+**Note that identity requests can only verify key auths, not account auths. E.g. you can not prove ownership of `bob@active` using `alice@active` even though bob has granted alice an account auth for that permission.**
+
+###### Identity Proof Action
+
+To create the identity proof the wallet signs a special EOSIO transaction that is not valid on-chain. The reason for it being a transaction and not just an arbitrary signature is that some hardware wallets do not support signing anything other than a EOSIO transaction.
+
+To resolve a identity request to the identity proof action the optional account permssion from the request data is copied to the following action:
+
+```jsonc
+{
+    "account": "", // uint64(0)
+    "name": "identity",
+    "authorization": [
+        {
+            "actor": "foobarfoobar",
+            "permission": "active"
+        }
+    ],
+    "data": {
+        "permission": {
+            "actor": "foobarfoobar",
+            "permission": "active"
+        }
+    }
+}
+```
+
+If the permission is not set in the request data the placeholder permission is used instead:
+
+```jsonc
+{
+    "account": "",
+    "name": "identity",
+    "authorization": [
+        {
+            "actor": "............1",
+            "permission": "............2"
+        }
+    ],
+    "data": {
+        "permission": {
+            "actor": "............1",
+            "permission": "............2"
+        }
+    }
+}
+```
+
+###### Signing Identity Proof Actions
+
+The signature is just a standard EOSIO transaction signature (chainId + serializedTx + 32bytePadding) but can also be thought of as a magic if a full EOSIO library isn't available at the verification point.
+
+```
+sign(sha256(
+  __ 32 byte chain id_____________________________________________
+  00000000000000000000000000000100000000000000000000003ebb3c557201
+  __ 16 byte account permission x2 _______________________________
+  ___ 33 byte zero-padding _________________________________________
+))
+```
+
+
+##### Null transaction header
+
+The "null" header consists of expiration date set to `1970-01-01T00:00:00` and ref block number and prefix set to zero and is used to denote that the resolver should fill in appropriate values.
+
+```jsonc
+{
+  "expiration": "1970-01-01T00:00:00",
+  "ref_block_num": 0,
+  "ref_block_prefix": 0,
+  // ...
+}
 ```
 
 ##### Signing Request - Placeholders
@@ -1209,15 +1295,27 @@ struct signing_request {
 }
 ```
 
+---
+
+## Backwards Compatibility
+
+- Revision 2 of the ESR signing protocol introduces breaking changes from Revision 1.
+
+---
+
 ## Change Log
 
-- 2020/01/16: Updated to Revision 2.
+- 2020/05/09: Updated to Revision 2.
 - 2019/10/28: Added change log, MIME type recommendation
-- 2020/04/29: Add details on request resolution and & signatures
+- 2020/05/29: Add details on request resolution and & signatures
+
+---
 
 ## Acknowledgements
 
 This proposal is inspired by the Bitcoin's [BIP 0021](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki), Ethereum's [ERC-67](https://github.com/ethereum/EIPs/issues/67), [EIP-681](https://eips.ethereum.org/EIPS/eip-681), [EIP-831](http://eips.ethereum.org/EIPS/eip-831), and Steem's [URI Spec](https://github.com/steemit/steem-uri-spec). Implementations of the URI protocol within these ecosystems pioneered the way by establishing a baseline for future adaptations like this.
+
+---
 
 ## Copyright
 
