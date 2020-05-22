@@ -84,9 +84,11 @@ While other protocols already exist within EOSIO for more intricate cross-applic
 
 ---
 
-## Technical Specification
+# Technical Specification
 
-The following specification sets out to define the technical standards used and the actual composition of an EOSIO Signing Request payload. Examples in this specification uses the JSON representation of the ABI data.
+The following specification sets out to define the technical standards used and the actual composition of an EOSIO Signing Request payload.
+
+> Note: Examples in this specification uses the JSON representation of the ABI data.
 
 ## Signing Request Specification
 
@@ -96,7 +98,7 @@ In its encapsulated form, an EOSIO Signing Request is a binary data structure wh
 gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA
 ```
 
-The above payload is a signing request for a transaction on EOS to perform the `voteproducer` action on the `eosio` contract. The data contained within the action itself also specifies the proxy of `greymassvote`.
+The above payload is a signing request for a transaction on the EOS blockchain to perform the `voteproducer` action on the `eosio` contract. The data contained within the action itself also specifies the proxy of `greymassvote`.
 
 Once decoded and inflated ([preview request](https://eosio.to/gmNgZGRkAIFXBqEFopc6760yugsVYWCA0YIwxgKjuxLSL6-mgmQA)) it will return the following data:
 
@@ -129,7 +131,7 @@ Once decoded and inflated ([preview request](https://eosio.to/gmNgZGRkAIFXBqEFop
 }
 ```
 
-This decoded data can then be used to prompt action from an end user in their preferred signature provider. The signature provider can then resolve the transaction and complete any required templating, sign the transaction, and optionally trigger a callback and/or broadcast the completed transaction to the blockchain.
+This decoded data can then be used to prompt action from the end user in their preferred signature provider. The signature provider can then [resolve the signing request](#Signature-Provider-Workflow), add a [signature for the transaction](#Signing-the-resolved-request), and potentially trigger a [callback](#callback) and/or broadcast the completed transaction to the blockchain. See the [EOSIO Client Integration](#EOSIO-Client-Integration) section for a more in-depth explanation.
 
 ### Data Format
 
@@ -320,9 +322,8 @@ The following are a set of guidelines in which end user applications (e.g. signa
 - EOSIO clients **MUST NOT** automatically act upon the data contained within a Signing Request without the user's authorization.
 - EOSIO clients **MUST** decode and present the transaction data in a human readable format for review before creating a signature.
 - EOSIO clients **SHOULD** inform the user of any callback which will be executed upon completion of a signing request.
-- EOSIO clients **SHOULD** register themselves as the handler for the `esr:` URI scheme by default, so long as no other handlers already exist. If a registered handler already exists, they **MAY** prompt the user to change it upon request.
-- EOSIO clients **SHOULD** allow the [use of proxies](#callback-proxies) when [handling callbacks](#issuing-callbacks).
-- EOSIO clients **SHOULD** use the [recommended MIME type](#mime-type) when applicable in their implementations.
+- EOSIO clients **SHOULD** register themselves as the handler for the `esr:` URI scheme by default so long as no other handlers already exist. If a registered handler already exists, they **MAY** prompt the user to change it upon request.
+- EOSIO clients **SHOULD** use the [recommended MIME type](#MIME-type) when applicable in their implementations.
 
 ### Signature Provider Workflow
 
@@ -332,9 +333,9 @@ Signature providers (a.k.a "Wallets") will need to go through a series of steps 
 
 To resolve a signing request to a transaction that can be signed the following steps are taken:
 
-- [A) Create transaction from payload](A--Create-transaction-from-payload)
-- [B) Resolve action placeholders](B--Resolve-action-placeholders)
-- [C) Insert TAPoS values](C--Insert-TAPoS-values)
+- [A) Create transaction from payload](#A--Create-transaction-from-payload)
+- [B) Resolve authority/action placeholders](#B--Resolve-authority-action-placeholders)
+- [C) Insert TAPoS values](#C--Insert-TAPoS-values)
 
 ###### A) Create transaction from payload
 
@@ -344,9 +345,9 @@ The payload should be inspected to determine the [request type](#req) and determ
 - Payloads with type `identity` are resolved to the [identity proof](#identity-proof) action and then treated just like an `action` request.
 - For the `transaction` type the full transaction is taken as-is.
 
-###### B) Resolve action placeholders
+###### B) Resolve authority/action placeholders
 
-The action data and authorization is inspected and all fields with the `name` that contain an [action placeholder](#action-placeholders) value is resolved.
+The action data and authorization is inspected and all fields with the `name` type that contain an [action placeholder](#action-placeholders) value is resolved.
 
  * `............1` (`uint64(1)`) - Is resolved to the signing account name, e.g. `foobarfoobar`
  * `............2` (`uint64(2)`) - Is resolved to the signing account permission, e.g. `active`
@@ -441,15 +442,15 @@ Now with a standard EOSIO transaction, the signature provider should use their n
 
 ### 3. Broadcasting the transaction
 
-Depending on the state of the [`broadcast`](#flags) flag in the request, the signature provider may be asked to broadcast this transaction directly to the appropriate blockchain before issuing the callback.
+Depending on the value of the [`broadcast`](#flags) flag in the request, the signature provider may be asked to broadcast this transaction directly to the appropriate blockchain before issuing the callback.
 
 This flag should always be respected by the signature provider, as the application issuing the signing request may want to broadcast the transaction to a specific API endpoint for further processing.
 
 ### 4. Issuing Callbacks
 
-An optional parameter of the signing request is the `callback`, which when set indicates how an EOSIO client should proceed after the transaction has completed. The `callback` itself is a string containing a full URL. This URL will be triggered after the transaction has been either signed or broadcast based on the `flags` provided.
+An optional parameter of the signing request is the `callback`, which when set indicates how an EOSIO client should proceed after the transaction has been signed and potentially broadcast. The `callback` itself is a string containing a full URL. This URL will be triggered after the transaction has been either signed or broadcast based on the `flags` provided.
 
-The `flags` value dictates the behavior of EOSIO client, indicating whether it should trigger the callback in the native OS handler (e.g. opening a web browser for `http` or `https`) or perform it in the background. If set to `true` and the URL protocol is either `http` or `https`, EOSIO clients should `POST` to the URL instead of redirecting/opening it in a web browser. For other protocols background behavior is up to the implementer.
+The `flags` value dictates the behavior of EOSIO client, indicating whether it should trigger the callback in the native OS handler (e.g. opening a web browser for `http` or `https`) or perform it in the background. If `background` is set to `true` and the URL protocol is either `http` or `https`, EOSIO clients should `POST` to the URL instead of redirecting/opening it in a web browser. For other protocols background behavior is up to the implementer.
 
 The callback URL also includes simple templating with some response parameters. The templating format syntax is `{{param_name}}`, e.g.:
 
@@ -492,7 +493,7 @@ esr:<signing_request>
 
 The `scheme` that defines the URI format is `esr`. Any client application capable of handling EOSIO transactions can register itself as the default system handler for this scheme.
 
-The `path` portion of the URI is a represents a "[Signing Request](#signing-request)". The data that makes up each request is serialized using the same binary format as the EOSIO blockchain. Each request is also encoded using a url-safe Base64 variant ([appx: Base64u](#base64u)) and optionally compressed using zlib deflate ([appx: Compression](#compression)).
+The `path` portion of the URI is a represents a "[Signing Request](#Signing-Request-Specification)". The data that makes up each request is serialized using the same binary format as the EOSIO blockchain. Each request is also encoded using a [url-safe Base64 variant](#base64u) and optionally [compressed using zlib deflate](#compression).
 
 ###### Format Example
 
@@ -572,29 +573,31 @@ Scanning the above QR code on a device with QR Code capabilities could trigger t
 
 Existing implementation of the EOSIO URI Scheme (REV 2) include:
 
-##### JS Client Frameworks
+##### JS Client Session Frameworks
 
 - [greymass/anchor-link](https://github.com/greymass/anchor-link) ([npm](https://www.npmjs.com/package/anchor-link)): A JavaScript library that uses ESR identity requests to create user sessions for bidirectional communication between applications and signature providers.
 - [eosnewyork/eos-transit-anchorlink-provider](https://github.com/eosnewyork/eos-transit/tree/master/packages/eos-transit-anchorlink-provider) ([npm](https://www.npmjs.com/package/eos-transit-anchorlink-provider)): A JavaScript plugin for [eosnewyork/eos-transit](https://github.com/eosnewyork/eos-transit) that uses [greymass/anchor-link](https://github.com/greymass/anchor-link) to allow authentication and signing requests using the ESR protocol.
 - [greymass/ual-anchor](https://github.com/greymass/ual-anchor) ([npm](https://www.npmjs.com/package/ual-anchor)): A JavaScript plugin for [EOSIO/universal-authenticator-library](https://github.com/EOSIO/universal-authenticator-library) that uses [greymass/anchor-link](https://github.com/greymass/anchor-link) to allow authentication and signing requests using the ESR protocol.
 
-##### JS Examples
-
-- [greymass/anchor-link-demo](https://github.com/greymass/anchor-link-demo): A VueJS example webapp supporting a single account capable of signing any contract/action using the [greymass/anchor-link](https://github.com/greymass/anchor-link) library.
-- [greymass/anchor-link-demo-multipass](https://github.com/greymass/anchor-link-demo-multipass): A ReactJS example webapp supporting multiple accounts and multiple blockchains using the [greymass/anchor-link](https://github.com/greymass/anchor-link) library.
-- [greymass/greymassfuel-transit-demo](https://github.com/greymass/greymassfuel-transit-demo): A VueJS example webapp using [eosnewyork/eos-transit](https://github.com/eosnewyork/eos-transit) and [eosnewyork/eos-transit-anchorlink-provider](https://github.com/eosnewyork/eos-transit/tree/master/packages/eos-transit-anchorlink-provider) to create example transactions that use OBFA action.
-- [greymass/ual-anchor-demo](https://github.com/greymass/ual-anchor-demo): An example based on the [EOSIO/ual-plainjs-renderer](https://github.com/EOSIO/ual-plainjs-renderer/tree/master/examples) example, utilizing [greymass/ual-anchor](https://github.com/greymass/ual-anchor).
-- [greymass/eosio-signing-request-demo](https://github.com/greymass/eosio-signing-request-demo): Example code using the base [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request) library to create request payloads.
-
-
-##### JS Libraries
+##### JS SDKs/Libraries
 - [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request) ([npm](https://www.npmjs.com/package/eosio-signing-request)): A JavaScript library to facilitate the creation and consumption of EOSIO Signing Requests.
 - [greymass/anchor-link-browser-transport](https://github.com/greymass/anchor-link-browser-transport) ([npm](https://www.npmjs.com/package/anchor-link-browser-transport)): A transport layer and browser/UI toolkit that extends [greymass/anchor-link](https://github.com/greymass/anchor-link) for applications to integrate directly.
 - [greymass/anchor-link-console-transport](https://github.com/greymass/anchor-link-console-transport) ([npm](https://www.npmjs.com/package/anchor-link-console-transport)): A transport layer for developers working with ESR to interact with [greymass/anchor-link](https://github.com/greymass/anchor-link) in a console environment.
 
+##### JS Examples
+
+- [greymass/anchor-link-demo](https://github.com/greymass/anchor-link-demo): A VueJS example webapp supporting a single account capable of signing any contract/action using the [greymass/anchor-link](https://github.com/greymass/anchor-link) library.
+- [greymass/anchor-link-demo-multipass](https://github.com/greymass/anchor-link-demo-multipass): A ReactJS example webapp supporting multiple accounts and multiple blockchains using the [greymass/anchor-link](https://github.com/greymass/anchor-link) library.
+- [greymass/eos-transit-demo-multipass](https://github.com/greymass/eos-transit-demo-multipass): A ReactJS example webapp supporting multiple accounts and multiple blockchains using the [eosnewyork/eos-transit-anchorlink-provider](https://github.com/eosnewyork/eos-transit/tree/master/packages/eos-transit-anchorlink-provider) library.
+- [greymass/eosio-signing-request-demo](https://github.com/greymass/eosio-signing-request-demo): Example code using the base [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request) library to create request payloads.
+- [greymass/greymassfuel-transit-demo](https://github.com/greymass/greymassfuel-transit-demo): A VueJS example webapp using [eosnewyork/eos-transit](https://github.com/eosnewyork/eos-transit) and [eosnewyork/eos-transit-anchorlink-provider](https://github.com/eosnewyork/eos-transit/tree/master/packages/eos-transit-anchorlink-provider) to create example transactions that use OBFA action.
+- [greymass/ual-anchor-demo](https://github.com/greymass/ual-anchor-demo): An example based on the [EOSIO/ual-plainjs-renderer](https://github.com/EOSIO/ual-plainjs-renderer/tree/master/examples) example, utilizing [greymass/ual-anchor](https://github.com/greymass/ual-anchor).
+- [greymass/ual-reactjs-renderer-demo-multipass](https://github.com/greymass/ual-reactjs-renderer-demo-multipass): A ReactJS example webapp supporting multiple accounts and multiple blockchains using the [greymass/ual-anchor](https://github.com/greymass/ual-anchor) and [ual-reactjs-renderer](https://github.com/EOSIO/ual-reactjs-renderer) libraries.
+
+
 ##### Java Libraries
 
-- In Development
+- [greymass/eosio-signing-request-java](https://github.com/greymass/eosio-signing-request-java) ([bintray](https://bintray.com/greymass/com.greymass.eosio-signing-request/eosio-signing-request-java)): A Java wrapper for [eosio-signing-request](https://github.com/greymass/eosio-signing-request) to facilitate the creation and consumption of EOSIO Signing Requests.
 
 ##### Swift Libraries
 - [greymass/swift-eosio](https://github.com/greymass/swift-eosio): A library for working with EOSIO blockchains, which has built-in support for ESR requests similar to [greymass/eosio-signing-request](https://github.com/greymass/eosio-signing-request).
@@ -617,6 +620,8 @@ Existing implementation of the EOSIO URI Scheme (REV 2) include:
 #### Example - Transaction to encoded PATH
 
 This example will take an EOSIO Signing Request and convert it into a compressed string.
+
+[![Edit clever-heisenberg-gobmi](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/clever-heisenberg-gobmi?fontsize=14&hidenavigation=1&theme=dark)
 
 ```js
 /*
@@ -755,6 +760,8 @@ gmNcs7jsE9uOP6rL3rrcvpMWUmN27LCdleD836_eTzFz-vCSjZGRYcm-EsZXBqEMILDA6C5QBAKYoLQQ
 #### Example - Encoded PATH to Transaction
 
 This example will take a compressed payload string and convert it into an EOSIO Signing Request structure.
+
+[![Edit mutable-wind-ccvvn](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/mutable-wind-ccvvn?fontsize=14&hidenavigation=1&theme=dark)
 
 ```js
 /*
@@ -1005,6 +1012,15 @@ sign(sha256(
 ))
 ```
 
+##### MIME Type
+
+In situations where a MIME type is applicable, the following should be used:
+
+```
+application/eosio-signing-request
+```
+
+If signing requests are being saved to files, the file type extension should be saved as `.esr`, e.g. `myfile.esr`.
 
 ##### Null transaction header
 
@@ -1303,7 +1319,7 @@ struct signing_request {
 
 ## Change Log
 
-- 2020/05/09: Updated to Revision 2.
+- 2020/05/20: Updated to Revision 2.
 - 2019/10/28: Added change log, MIME type recommendation
 - 2020/05/29: Add details on request resolution and & signatures
 
